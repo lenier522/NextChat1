@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/bs_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <!-- A) ImageView para congelar la foto -->
+    <ImageView
+        android:id="@+id/ivPhotoPreview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:visibility="gone"/>
+
+    <!-- 1) PreviewView de CameraX -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:implementationMode="compatible" />
+
+    <!-- 2) Contenedor de controles -->
+    <FrameLayout
+        android:id="@+id/controlContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:padding="16dp">
+
+        <!-- A) Controles de cámara (toma / switch / flash) -->
+        <LinearLayout
+            android:id="@+id/cameraControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:visibility="visible">
+
+            <!-- Botón disparo -->
+            <ImageButton
+                android:id="@+id/btnShutter"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:contentDescription="Tomar foto"
+                android:src="@drawable/your_shutter_icon"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+
+            <!-- Cambiar cámara -->
+            <ImageButton
+                android:id="@+id/btnSwitch"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="24dp"
+                android:contentDescription="Cambiar cámara"
+                android:src="@drawable/your_switch_icon"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+
+            <!-- Toggle flash -->
+            <ImageButton
+                android:id="@+id/btnFlash"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="24dp"
+                android:contentDescription="Flash"
+                android:src="@drawable/your_flash_icon"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+        </LinearLayout>
+
+        <!-- B) Controles de previsualización (aceptar / descartar) -->
+        <LinearLayout
+            android:id="@+id/previewControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <!-- Eliminar / Descarta -->
+            <ImageButton
+                android:id="@+id/btnDiscard"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="Descartar foto"
+                android:src="@drawable/ic_delete"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+
+            <!-- Espacio entre botones -->
+            <Space
+                android:layout_width="32dp"
+                android:layout_height="match_parent" />
+
+            <!-- Aceptar / Enviar -->
+            <ImageButton
+                android:id="@+id/btnAccept"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="Aceptar foto"
+                android:src="@drawable/ic_check"
+                android:background="?attr/selectableItemBackgroundBorderless" />
+        </LinearLayout>
+
+    </FrameLayout>
+</FrameLayout>

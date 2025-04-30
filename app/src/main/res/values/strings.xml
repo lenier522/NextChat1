@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">NextChat</string>
+    <string name="play_audio">play_audio</string>
+
+
+    <string name="cambios">v 1.0 Release \n\n
+    1- Primera Release publica.\n\n
+    v 1.1.1 \n\n
+    Cambios \n\n
+    1-Se agregó la opción de enviar imagenes desde la Cámara.\n
+    2-Mejoras visuales en los audios.\n
+    3-Mejora visual para Empezar un nuevo Chat.
+    4-Se corrigió errores de conexión al Inicio</string>
+</resources>
