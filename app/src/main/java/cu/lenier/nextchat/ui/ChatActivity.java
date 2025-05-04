@@ -27,8 +27,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -41,6 +39,7 @@ import cu.lenier.nextchat.adapter.MessageAdapter;
 import cu.lenier.nextchat.config.AppConfig;
 import cu.lenier.nextchat.data.AppDatabase;
 import cu.lenier.nextchat.model.Message;
+import cu.lenier.nextchat.model.Profile;
 import cu.lenier.nextchat.util.MailHelper;
 import cu.lenier.nextchat.util.PermissionHelper;
 import cu.lenier.nextchat.util.SimpleTextWatcher;
@@ -64,8 +63,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private final Handler syncHandler = new Handler();
     private final Runnable syncRunnable = new Runnable() {
-        @Override
-        public void run() {
+        @Override public void run() {
             MailSyncWorker.forceSyncNow(ChatActivity.this);
             syncHandler.postDelayed(this, 5000);
         }
@@ -78,14 +76,31 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        // Recupera emails
+        contact = getIntent().getStringExtra("contact");
+        me      = getSharedPreferences("prefs", MODE_PRIVATE)
+                .getString("email", "");
+
         // Toolbar
         toolbar = findViewById(R.id.toolbar_chat);
         setSupportActionBar(toolbar);
         contact = getIntent().getStringExtra("contact");
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(contact);
-            getSupportActionBar().setSubtitle("Esperando conexión...");
-        }
+        me      = getSharedPreferences("prefs", MODE_PRIVATE).getString("email", "");
+
+        // Inicialmente ponemos el email
+        getSupportActionBar().setTitle(contact);
+        getSupportActionBar().setSubtitle("Esperando conexión...");
+
+        // Ahora buscamos nombre de perfil (si existe) y lo aplicamos
+        Executors.newSingleThreadExecutor().execute(() -> {
+            Profile p = AppDatabase
+                    .getInstance(this)
+                    .profileDao()
+                    .getByEmailSync(contact.trim().toLowerCase());
+            if (p != null && p.name != null && !p.name.isEmpty()) {
+                runOnUiThread(() -> getSupportActionBar().setTitle(p.name));
+            }
+        });
 
         // RecyclerView
         rv = findViewById(R.id.rvMessages);
@@ -98,31 +113,26 @@ public class ChatActivity extends AppCompatActivity {
         fab = findViewById(R.id.fabSend);
         ImageButton btnCamera = findViewById(R.id.btnCamera);
 
-        me = getSharedPreferences("prefs", MODE_PRIVATE).getString("email", "");
-
         // Observador de mensajes
         AppDatabase.getInstance(this)
                 .messageDao()
                 .getByContact(contact)
-                .observe(this, new Observer<List<Message>>() {
-                    @Override
-                    public void onChanged(List<Message> msgs) {
-                        adapter.setMessages(msgs);
-                        rv.scrollToPosition(adapter.getItemCount() - 1);
-                        Executors.newSingleThreadExecutor().execute(() ->
-                                AppDatabase.getInstance(ChatActivity.this)
-                                        .messageDao().markAsRead(contact, me)
-                        );
-                        // Actualizar timestamp de última entrada
-                        for (int i = msgs.size() - 1; i >= 0; i--) {
-                            Message m = msgs.get(i);
-                            if (!m.sent) {
-                                lastIncomingTs = m.timestamp;
-                                break;
-                            }
+                .observe(this, (Observer<List<Message>>) msgs -> {
+                    adapter.setMessages(msgs);
+                    rv.scrollToPosition(adapter.getItemCount() - 1);
+                    Executors.newSingleThreadExecutor().execute(() ->
+                            AppDatabase.getInstance(ChatActivity.this)
+                                    .messageDao().markAsRead(contact, me)
+                    );
+                    // Actualizar timestamp de última entrada
+                    for (int i = msgs.size() - 1; i >= 0; i--) {
+                        Message m = msgs.get(i);
+                        if (!m.sent) {
+                            lastIncomingTs = m.timestamp;
+                            break;
                         }
-                        updateOnlineStatus();
                     }
+                    updateOnlineStatus();
                 });
 
         // Cambiar icono del FAB
@@ -149,7 +159,8 @@ public class ChatActivity extends AppCompatActivity {
             if (needsCamera) {
                 PermissionHelper.requestPermissionsIfNeeded(this);
             } else {
-                CameraBottomSheet.newInstance(contact)
+                cu.lenier.nextchat.BottomSheet.CameraBottomSheet
+                        .newInstance(contact)
                         .show(getSupportFragmentManager(), "camera_sheet");
             }
         });
@@ -160,12 +171,12 @@ public class ChatActivity extends AppCompatActivity {
             if (!txt.isEmpty()) {
                 et.setText("");
                 Message m = new Message();
-                m.fromAddress = me;
-                m.toAddress = contact;
-                m.subject = "NextChat";
-                m.body = txt;
-                m.attachmentPath = null;
-                m.timestamp = System.currentTimeMillis();
+                m.fromAddress   = me;
+                m.toAddress     = contact;
+                m.subject       = "NextChat";
+                m.body          = txt;
+                m.attachmentPath= null;
+                m.timestamp     = System.currentTimeMillis();
                 m.sent = true; m.read = true; m.type = "text";
                 m.sendState = Message.STATE_PENDING;
                 MailHelper.sendEmail(this, m);
@@ -188,7 +199,7 @@ public class ChatActivity extends AppCompatActivity {
             return false;
         });
 
-        // NetworkCallback: si hay red disponible, actualizamos “últ. vez…”; si se pierde, “Sin conexión”
+        // NetworkCallback: online/offline
         netCallback = new ConnectivityManager.NetworkCallback() {
             @Override public void onAvailable(@NonNull Network network) {
                 runOnUiThread(() -> updateOnlineStatus());
@@ -249,9 +260,9 @@ public class ChatActivity extends AppCompatActivity {
         try {
             File dir = new File(getExternalFilesDir(null), "audios_enviados");
             if (!dir.exists()) dir.mkdirs();
-            audioPath = new File(dir, "audio_" + System.currentTimeMillis() + ".3gp")
+            audioPath = new File(dir,
+                    "audio_" + System.currentTimeMillis() + ".3gp")
                     .getAbsolutePath();
-
             recorder = new MediaRecorder();
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
@@ -262,7 +273,8 @@ public class ChatActivity extends AppCompatActivity {
             Toast.makeText(this, "Grabando audio...", Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
             e.printStackTrace();
-            Toast.makeText(this, "Error al grabar audio", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,
+                    "Error al grabar audio", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -270,22 +282,21 @@ public class ChatActivity extends AppCompatActivity {
         recorder.stop();
         recorder.release();
         recorder = null;
-        Toast.makeText(this, "Enviando audio...", Toast.LENGTH_SHORT).show();
-
+        Toast.makeText(this,
+                "Enviando audio...", Toast.LENGTH_SHORT).show();
         Message m = new Message();
-        m.fromAddress = me;
-        m.toAddress = contact;
-        m.subject = "NextChat Audio";
-        m.body = "";
-        m.attachmentPath = audioPath;
-        m.timestamp = System.currentTimeMillis();
+        m.fromAddress   = me;
+        m.toAddress     = contact;
+        m.subject       = "NextChat Audio";
+        m.body          = "";
+        m.attachmentPath= audioPath;
+        m.timestamp     = System.currentTimeMillis();
         m.sent = true; m.read = true; m.type = "audio";
         m.sendState = Message.STATE_PENDING;
         MailHelper.sendAudioEmail(this, m);
     }
 
     private void updateOnlineStatus() {
-        // Primero comprobamos si hay red
         ConnectivityManager cm = (ConnectivityManager)
                 getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo ni = cm.getActiveNetworkInfo();
@@ -295,8 +306,6 @@ public class ChatActivity extends AppCompatActivity {
                 getSupportActionBar().setSubtitle("Sin conexión");
             return;
         }
-
-        // Si hay red: "en línea" / "últ. vez..."
         handler.removeCallbacks(offlineRunnable);
         long now = System.currentTimeMillis();
         if (now < lastIncomingTs + 120_000) {
@@ -311,10 +320,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private void showLastSeen() {
         if (getSupportActionBar() == null) return;
-        String date = new SimpleDateFormat("d 'de' MMM", new Locale("es"))
-                .format(new Date(lastIncomingTs));
-        String time = new SimpleDateFormat("hh:mm a", new Locale("es"))
-                .format(new Date(lastIncomingTs));
+        String date = new SimpleDateFormat("d 'de' MMM",
+                new Locale("es")).format(new Date(lastIncomingTs));
+        String time = new SimpleDateFormat("hh:mm a",
+                new Locale("es")).format(new Date(lastIncomingTs));
         getSupportActionBar().setSubtitle("últ. vez " + date + ", " + time);
     }
 }

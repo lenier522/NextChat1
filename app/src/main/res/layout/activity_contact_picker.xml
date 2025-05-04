@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/layout/activity_contact_picker.xml -->
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Toolbar con flecha de up, fondo claro -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar_picker"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:title="Seleccionar contacto"
+        app:navigationIcon="@drawable/ic_arrow_back_24"
+        app:titleTextColor="@color/black"
+        app:subtitleTextColor="@color/colorAccent" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvContacts"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+

@@ -36,13 +36,22 @@
                 android:textColor="@android:color/white"
                 android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
                 android:layout_marginTop="8dp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Introduzca un correo para iniciar una nueva conversación"
+                android:layout_margin="20dp"
+                android:textColor="@android:color/white"
+                android:textSize="15dp"
+                android:textStyle="bold"/>
         </LinearLayout>
 
         <!-- Input email -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="24dp"
+            android:layout_margin="20dp"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:hint="usuario@nauta.cu">
 

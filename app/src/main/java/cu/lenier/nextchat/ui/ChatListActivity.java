@@ -108,6 +108,25 @@ public class ChatListActivity extends AppCompatActivity {
         loadAndApplyProfiles();
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Infla el menú que creamos
+        getMenuInflater().inflate(R.menu.menu_chat_list, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_profile) {
+            // tu código existente...
+            startActivity(new Intent(this, ProfileActivity.class));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
     @Override protected void onStart() {
         super.onStart();
         LocalBroadcastManager.getInstance(this)
@@ -151,7 +170,7 @@ public class ChatListActivity extends AppCompatActivity {
                     .getPackageInfo(getPackageName(), 0).versionName;
             int vCode = getPackageManager()
                     .getPackageInfo(getPackageName(), 0).versionCode;
-            String url = "https://raw.githubusercontent.com/lenier522/update/main/update.json";
+            String url = "https://raw.githubusercontent.com/lenier2002/update/main/update.json";
             UpdateChecker.checkForUpdate(this, vCode, url, true);
             boolean shown = getSharedPreferences(vName, MODE_PRIVATE)
                     .getBoolean("about_shown", false);
@@ -185,35 +204,12 @@ public class ChatListActivity extends AppCompatActivity {
         rv.setAdapter(adapter);
     }
 
+    // dentro de ChatListActivity.java
     private void setupFab() {
         FloatingActionButton fab = findViewById(R.id.fabNewChat);
-        fab.setOnClickListener(v -> promptNewChat());
-    }
-
-    private void promptNewChat() {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_new_chat, null);
-        TextInputEditText etEmail = dialogView.findViewById(R.id.etEmail);
-        Button btnCancel = dialogView.findViewById(R.id.btnCancel);
-        Button btnChat   = dialogView.findViewById(R.id.btnChat);
-
-        AlertDialog dlg = new MaterialAlertDialogBuilder(this,
-                R.style.Theme_NextChat_AlertDialog)
-                .setView(dialogView).create();
-
-        btnCancel.setOnClickListener(v -> dlg.dismiss());
-        btnChat.setOnClickListener(v -> {
-
-//          throw new RuntimeException("Crash de prueba pulsando el botón");
-
-            String email = etEmail.getText().toString().trim();
-            if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                Snackbar.make(v, "Email inválido", Snackbar.LENGTH_SHORT).show();
-            } else {
-                dlg.dismiss();
-                openChat(email);
-            }
-        });
-        dlg.show();
+        fab.setOnClickListener(v ->
+                startActivity(new Intent(this, ContactPickerActivity.class))
+        );
     }
 
     private void observeContacts() {

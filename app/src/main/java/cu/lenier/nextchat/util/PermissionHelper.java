@@ -29,6 +29,12 @@ public class PermissionHelper {
                 != PackageManager.PERMISSION_GRANTED) {
             list.add(android.Manifest.permission.RECORD_AUDIO);
         }
+        // Lectura de contactos
+        if (ContextCompat.checkSelfPermission(act,
+                android.Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            list.add(android.Manifest.permission.READ_CONTACTS);
+        }
         // Notificaciones (solo Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ContextCompat.checkSelfPermission(act,
