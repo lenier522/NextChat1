@@ -2,7 +2,7 @@ package cu.lenier.nextchat.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
-import android.view.View;
+import android.view.View;               // Añadido
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -91,14 +91,19 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.VH> {
             Context ctx = itemView.getContext();
             String key = contact.trim().toLowerCase();
 
-            // 1) Avatar: cargar desde fichero local
+            // 1) Avatar: cargar desde fichero local (si existe ruta no nula)
             if (avatarMap != null && avatarMap.containsKey(key)) {
-                File avatarFile = new File(avatarMap.get(key));
-                if (avatarFile.exists()) {
-                    Glide.with(ctx)
-                            .load(avatarFile)
-                            .circleCrop()
-                            .into(ivAvatar);
+                String path = avatarMap.get(key);
+                if (path != null) {
+                    File avatarFile = new File(path);
+                    if (avatarFile.exists()) {
+                        Glide.with(ctx)
+                                .load(avatarFile)
+                                .circleCrop()
+                                .into(ivAvatar);
+                    } else {
+                        ivAvatar.setImageResource(R.mipmap.ic_profile_default);
+                    }
                 } else {
                     ivAvatar.setImageResource(R.mipmap.ic_profile_default);
                 }
@@ -106,8 +111,8 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.VH> {
                 ivAvatar.setImageResource(R.mipmap.ic_profile_default);
             }
 
-            // 2) Nombre (perfil si existe, sino alias/email)
-            if (nameMap != null && nameMap.containsKey(key)) {
+            // 2) Nombre
+            if (nameMap != null && nameMap.containsKey(key) && nameMap.get(key) != null) {
                 tvName.setText(nameMap.get(key));
             } else {
                 tvName.setText(AppConfig.getDisplayName(contact));
@@ -118,23 +123,31 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.VH> {
                     AppConfig.isVerified(contact) ? View.VISIBLE : View.GONE
             );
 
-            // 4) Vista previa
-            String prev = (previewMap != null && previewMap.containsKey(contact))
-                    ? previewMap.get(contact) : "";
+            // 4) Vista previa (texto o tipo de mensaje)
+            String prev = "";
+            if (previewMap != null && previewMap.containsKey(contact)) {
+                prev = previewMap.get(contact);
+                if (prev == null) prev = "";
+            }
             tvPreview.setText(prev);
 
             // 5) Hora del último mensaje
+            String timeText = "";
             if (timeMap != null && timeMap.containsKey(contact)) {
-                long ts = timeMap.get(contact);
-                tvTime.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault())
-                        .format(new Date(ts)));
-            } else {
-                tvTime.setText("");
+                Long ts = timeMap.get(contact);
+                if (ts != null && ts > 0) {
+                    timeText = new SimpleDateFormat("hh:mm a", Locale.getDefault())
+                            .format(new Date(ts));
+                }
             }
+            tvTime.setText(timeText);
 
             // 6) Badge de no leídos
-            int cnt = (unreadMap != null && unreadMap.containsKey(contact))
-                    ? unreadMap.get(contact) : 0;
+            int cnt = 0;
+            if (unreadMap != null && unreadMap.containsKey(contact)) {
+                Integer v = unreadMap.get(contact);
+                cnt = (v != null) ? v : 0;
+            }
             if (cnt > 0) {
                 tvBadge.setVisibility(View.VISIBLE);
                 tvBadge.setText(String.valueOf(cnt));
