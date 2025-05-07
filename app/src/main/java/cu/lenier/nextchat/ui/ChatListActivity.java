@@ -170,7 +170,7 @@ public class ChatListActivity extends AppCompatActivity {
                     .getPackageInfo(getPackageName(), 0).versionName;
             int vCode = getPackageManager()
                     .getPackageInfo(getPackageName(), 0).versionCode;
-            String url = "https://raw.githubusercontent.com/lenier2002/update/main/update.json";
+            String url = "https://raw.githubusercontent.com/lenier522/update/main/update.json";
             UpdateChecker.checkForUpdate(this, vCode, url, true);
             boolean shown = getSharedPreferences(vName, MODE_PRIVATE)
                     .getBoolean("about_shown", false);

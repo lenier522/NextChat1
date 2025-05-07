@@ -3,6 +3,8 @@ package cu.lenier.nextchat.util;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.util.Log;
 
@@ -73,26 +75,42 @@ public class ProfileSender {
                 MimeMultipart multipart = new MimeMultipart();
                 multipart.addBodyPart(textPart);
 
-                // 7) Adjunta la imagen real con nombre único
+                // 7) Adjunta la imagen reducida
                 if (profile.photoUri != null && !profile.photoUri.isEmpty()) {
                     Uri uri = Uri.parse(profile.photoUri);
+
+                    // Leer el stream original
                     try (InputStream is = ctx.getContentResolver().openInputStream(uri)) {
+                        Bitmap original = BitmapFactory.decodeStream(is);
+
+                        // ---- OPCIÓN 1: pequeño (200x200) ----
+//                        Bitmap bmp = Bitmap.createScaledBitmap(original, 200, 200, true);
+
+                        // ---- OPCIÓN 2: mediano (600x600) ----
+                        Bitmap bmp = Bitmap.createScaledBitmap(original, 600, 600, true);
+
+                        // ---- OPCIÓN 3: grande (1200x1200) ----
+//                        Bitmap bmp = Bitmap.createScaledBitmap(original, 1200, 1200, true);
+
+                        // Convertir a byte[]
                         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        byte[] buf = new byte[4096];
-                        int r;
-                        while ((r = is.read(buf)) > 0) bos.write(buf, 0, r);
+                        bmp.compress(Bitmap.CompressFormat.JPEG, 80, bos);
                         byte[] data = bos.toByteArray();
-                        String mimeType = ctx.getContentResolver().getType(uri);
+
+                        String mimeType = "image/jpeg";
                         ByteArrayDataSource ds = new ByteArrayDataSource(data, mimeType);
 
                         MimeBodyPart imgPart = new MimeBodyPart();
                         imgPart.setDataHandler(new DataHandler(ds));
 
-                        // Construye el nombre de archivo: localpart_timestamp.jpg
+                        // Construye el nombre: localpart_timestamp.jpg
                         String email = profile.email != null ? profile.email : userEmail;
-                        String localPart = email.contains("@") ? email.substring(0, email.indexOf('@')) : email;
+                        String localPart = email.contains("@")
+                                ? email.substring(0, email.indexOf('@'))
+                                : email;
                         String filename = localPart + "_" + System.currentTimeMillis() + ".jpg";
                         imgPart.setFileName(filename);
+                        imgPart.setDisposition(MimeBodyPart.ATTACHMENT);
 
                         multipart.addBodyPart(imgPart);
                     }
