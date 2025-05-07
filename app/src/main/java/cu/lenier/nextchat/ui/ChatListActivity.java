@@ -1,3 +1,4 @@
+// ChatListActivity.java
 package cu.lenier.nextchat.ui;
 
 import android.content.BroadcastReceiver;
@@ -119,13 +120,11 @@ public class ChatListActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_profile) {
-            // tu código existente...
             startActivity(new Intent(this, ProfileActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
 
     @Override protected void onStart() {
         super.onStart();
@@ -204,7 +203,6 @@ public class ChatListActivity extends AppCompatActivity {
         rv.setAdapter(adapter);
     }
 
-    // dentro de ChatListActivity.java
     private void setupFab() {
         FloatingActionButton fab = findViewById(R.id.fabNewChat);
         fab.setOnClickListener(v ->
@@ -255,7 +253,6 @@ public class ChatListActivity extends AppCompatActivity {
     private void setupNetworkCallback() {
         netCallback = new ConnectivityManager.NetworkCallback() {
             @Override public void onAvailable(@NonNull Network network) {
-                // TODO: siempre en UI thread
                 runOnUiThread(() -> toolbar.setTitle("Conectando..."));
                 Executors.newSingleThreadExecutor().execute(() -> {
                     boolean ok = hasInternetAccess();
