@@ -1,5 +1,6 @@
 package cu.lenier.nextchat.util;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -29,6 +30,15 @@ public class PermissionHelper {
                 != PackageManager.PERMISSION_GRANTED) {
             list.add(android.Manifest.permission.RECORD_AUDIO);
         }
+
+        // Alarma
+        if (ContextCompat.checkSelfPermission(act,
+                Manifest.permission.SCHEDULE_EXACT_ALARM)
+                != PackageManager.PERMISSION_GRANTED) {
+            list.add(Manifest.permission.SCHEDULE_EXACT_ALARM);
+        }
+
+
         // Lectura de contactos
         if (ContextCompat.checkSelfPermission(act,
                 android.Manifest.permission.READ_CONTACTS)

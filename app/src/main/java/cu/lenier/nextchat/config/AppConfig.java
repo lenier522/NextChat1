@@ -14,10 +14,9 @@ import java.util.Map;
 import cu.lenier.nextchat.exceptions.ExceptionHandler;
 import cu.lenier.nextchat.work.MailSyncWorker;
 
+
 public class AppConfig extends Application {
     private static AppConfig instance;
-    private static final String CHANNEL_SYNC = "MailSyncChannel";
-    private static final String CHANNEL_NEWMSG = "NewMsgChannel";
 
     private static final Map<String, String> VERIFIED_NAMES;
     static {
@@ -34,31 +33,26 @@ public class AppConfig extends Application {
         super.onCreate();
         instance = this;
 
+        // Mantenemos el manejo global de excepciones
         Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler(this));
-        createNotificationChannels();
+
+        // Ya no creamos canales de notificación
+        // createNotificationChannels();
+
+        // Seguimos programando el worker si ya estamos logueados
         scheduleWorkerIfNeeded();
     }
 
+    // Eliminamos este método o lo dejamos vacío
+    @SuppressWarnings("unused")
     private void createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel syncChannel = new NotificationChannel(
-                    CHANNEL_SYNC, "NextChat Sync", NotificationManager.IMPORTANCE_LOW
-            );
-
-            NotificationChannel msgChannel = new NotificationChannel(
-                    CHANNEL_NEWMSG, "Notificaciones", NotificationManager.IMPORTANCE_DEFAULT
-            );
-
-            NotificationManager nm = getSystemService(NotificationManager.class);
-            nm.createNotificationChannel(syncChannel);
-            nm.createNotificationChannel(msgChannel);
-        }
+        // NO HACER NADA: Queremos cero notificaciones
     }
 
     private void scheduleWorkerIfNeeded() {
         SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE);
         String email = prefs.getString("email", "");
-        String pass = prefs.getString("pass", "");
+        String pass  = prefs.getString("pass",  "");
 
         if (!email.isEmpty() && !pass.isEmpty()) {
             MailSyncWorker.schedulePeriodicSync(this);

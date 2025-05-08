@@ -57,29 +57,31 @@ import cu.lenier.nextchat.work.MailSyncWorker;
 
 public class ChatListActivity extends AppCompatActivity {
     private ChatListAdapter adapter;
-    private final Map<String,Integer> unreadMap = new HashMap<>();
+    private final Map<String, Integer> unreadMap = new HashMap<>();
     private Toolbar toolbar;
     private ConnectivityManager cm;
     private ConnectivityManager.NetworkCallback netCallback;
 
     private final Handler syncHandler = new Handler();
     private final Runnable syncRunnable = new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
             MailSyncWorker.forceSyncNow(ChatListActivity.this);
             syncHandler.postDelayed(this, 5000);
         }
     };
 
     private final BroadcastReceiver profilesReceiver = new BroadcastReceiver() {
-        @Override public void onReceive(Context ctx, Intent intent) {
+        @Override
+        public void onReceive(Context ctx, Intent intent) {
             loadAndApplyProfiles();
         }
     };
 
-    @Override protected void onCreate(Bundle savedInstanceState) {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_list);
-
 
         // 1) Iniciar servicios de email y perfil
         Intent mailSvc = new Intent(this, MailService.class);
@@ -100,7 +102,7 @@ public class ChatListActivity extends AppCompatActivity {
         setupRecyclerView();
         setupFab();
 
-        // 4) Preparar NetworkCallback (registrado en onResume)
+        // 4) Preparar NetworkCallback
         setupNetworkCallback();
 
         // 5) Observers de datos
@@ -111,48 +113,47 @@ public class ChatListActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Infla el menú que creamos
         getMenuInflater().inflate(R.menu.menu_chat_list, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_profile) {
+        if (item.getItemId() == R.id.action_profile) {
             startActivity(new Intent(this, ProfileActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    @Override protected void onStart() {
+    @Override
+    protected void onStart() {
         super.onStart();
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(profilesReceiver,
                         new IntentFilter(ProfileFetchService.ACTION_PROFILES_SYNCED));
     }
 
-    @Override protected void onStop() {
+    @Override
+    protected void onStop() {
         LocalBroadcastManager.getInstance(this)
                 .unregisterReceiver(profilesReceiver);
         super.onStop();
     }
 
-    @Override protected void onResume() {
+    @Override
+    protected void onResume() {
         super.onResume();
-        // Registrar callback de red
         cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         try {
             cm.registerDefaultNetworkCallback(netCallback);
         } catch (Exception ignored) {}
-        // Iniciar sincronización periódica
         syncHandler.post(syncRunnable);
     }
 
-    @Override protected void onPause() {
+    @Override
+    protected void onPause() {
         super.onPause();
-        // Dar de baja callback de red
         try {
             if (cm != null && netCallback != null) {
                 cm.unregisterNetworkCallback(netCallback);
@@ -161,16 +162,13 @@ public class ChatListActivity extends AppCompatActivity {
         syncHandler.removeCallbacks(syncRunnable);
     }
 
-    // —— Helpers —— //
-
     private void setupVersionDialog() {
         try {
-            String vName = getPackageManager()
-                    .getPackageInfo(getPackageName(), 0).versionName;
-            int vCode = getPackageManager()
-                    .getPackageInfo(getPackageName(), 0).versionCode;
+            String vName = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            int vCode = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
             String url = "https://raw.githubusercontent.com/lenier522/update/main/update.json";
             UpdateChecker.checkForUpdate(this, vCode, url, true);
+
             boolean shown = getSharedPreferences(vName, MODE_PRIVATE)
                     .getBoolean("about_shown", false);
             if (!shown) {
@@ -214,13 +212,12 @@ public class ChatListActivity extends AppCompatActivity {
         AppDatabase db = AppDatabase.getInstance(this);
         db.messageDao().getContacts().observe(this, contacts -> {
             Executors.newSingleThreadExecutor().execute(() -> {
-                Map<String,String> previews = new HashMap<>();
-                Map<String,Long> times = new HashMap<>();
+                Map<String, String> previews = new HashMap<>();
+                Map<String, Long> times = new HashMap<>();
                 for (String c : contacts) {
                     Message last = db.messageDao().getLastMessageSync(c);
                     if (last != null) {
-                        previews.put(c, last.type.equals("text")
-                                ? last.body : last.type);
+                        previews.put(c, last.type.equals("text") ? last.body : last.type);
                         times.put(c, last.timestamp);
                     } else {
                         previews.put(c, "");
@@ -252,35 +249,17 @@ public class ChatListActivity extends AppCompatActivity {
 
     private void setupNetworkCallback() {
         netCallback = new ConnectivityManager.NetworkCallback() {
-            @Override public void onAvailable(@NonNull Network network) {
-                runOnUiThread(() -> toolbar.setTitle("Conectando..."));
-                Executors.newSingleThreadExecutor().execute(() -> {
-                    boolean ok = hasInternetAccess();
-                    runOnUiThread(() -> {
-                        if (ok) toolbar.setTitle(getString(R.string.app_name));
-                        else    toolbar.setTitle("Conectando...");
-                    });
-                });
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                // Tan pronto haya red, mostramos el nombre de la app
+                runOnUiThread(() -> toolbar.setTitle(getString(R.string.app_name)));
             }
-            @Override public void onLost(@NonNull Network network) {
+
+            @Override
+            public void onLost(@NonNull Network network) {
                 runOnUiThread(() -> toolbar.setTitle("Esperando conexión..."));
             }
         };
-    }
-
-    private boolean hasInternetAccess() {
-        try {
-            HttpURLConnection conn = (HttpURLConnection)
-                    new URL("https://www.todus.cu").openConnection();
-            conn.setRequestProperty("Connection", "close");
-            conn.setConnectTimeout(2000);
-            conn.connect();
-            int code = conn.getResponseCode();
-            conn.disconnect();
-            return code >= 200 && code < 400;
-        } catch (IOException e) {
-            return false;
-        }
     }
 
     private void loadAndApplyProfiles() {
@@ -288,8 +267,8 @@ public class ChatListActivity extends AppCompatActivity {
             List<Profile> profiles = AppDatabase.getInstance(this)
                     .profileDao()
                     .getAllProfilesSync();
-            Map<String,String> nameMap   = new HashMap<>();
-            Map<String,String> avatarMap = new HashMap<>();
+            Map<String, String> nameMap = new HashMap<>();
+            Map<String, String> avatarMap = new HashMap<>();
             for (Profile p : profiles) {
                 String key = p.email.trim().toLowerCase();
                 nameMap.put(key, p.name);

@@ -1,4 +1,4 @@
-// app/src/main/java/cu/lenier/nextchat/work/MailSyncWorker.java
+// src/main/java/cu/lenier/nextchat/work/MailSyncWorker.java
 package cu.lenier.nextchat.work;
 
 import android.content.Context;
@@ -55,7 +55,7 @@ public class MailSyncWorker extends Worker {
             SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
             long lastSync = prefs.getLong(KEY_LAST_SYNC, 0);
             String email = prefs.getString("email", "");
-            String pass  = prefs.getString("pass", "");
+            String pass  = prefs.getString("pass",  "");
 
             if (email.isEmpty() || pass.isEmpty()) {
                 return Result.success();
@@ -68,7 +68,7 @@ public class MailSyncWorker extends Worker {
             props.put("mail.imap.ssl.enable", "false");
             Session session = Session.getInstance(props);
             Store store = session.getStore("imap");
-            store.connect(email, pass);
+            store.connect("imap.nauta.cu", 143, email, pass);
 
             IMAPFolder inbox = (IMAPFolder) store.getFolder("INBOX");
             inbox.open(Folder.READ_ONLY);
@@ -82,20 +82,26 @@ public class MailSyncWorker extends Worker {
                 if (rts <= lastSync) continue;
                 newLast = Math.max(newLast, rts);
 
+                String subj = m.getSubject();
+                if (!TXT_SUBJ.equals(subj) && !AUD_SUBJ.equals(subj)) {
+                    continue;
+                }
+
+                // Construir objeto Message
                 Message msg = new Message();
                 msg.fromAddress    = m.getFrom()[0].toString();
                 msg.toAddress      = email;
                 msg.timestamp      = rts;
                 msg.sent           = false;
                 msg.read           = false;
-                msg.subject        = m.getSubject();
+                msg.subject        = subj;
 
                 Object content = m.getContent();
-                if (TXT_SUBJ.equals(m.getSubject()) && !(content instanceof javax.mail.Multipart)) {
+                if (TXT_SUBJ.equals(subj) && !(content instanceof javax.mail.Multipart)) {
                     msg.type = "text";
                     msg.body = CryptoHelper.decrypt(content.toString());
                     msg.attachmentPath = null;
-                } else if (AUD_SUBJ.equals(m.getSubject()) && content instanceof javax.mail.Multipart) {
+                } else if (AUD_SUBJ.equals(subj) && content instanceof javax.mail.Multipart) {
                     msg.type = "audio";
                     msg.body = "";
                     javax.mail.Multipart mp = (javax.mail.Multipart) content;
@@ -120,18 +126,24 @@ public class MailSyncWorker extends Worker {
                 } else {
                     continue;
                 }
-                // SALTO si ya existe
+
+                // Evitar duplicados
                 if (dao.countExisting(msg.fromAddress, msg.toAddress, msg.subject, msg.timestamp) > 0) {
                     continue;
                 }
 
+                // Insertar en BD
                 dao.insert(msg);
 
-                // Notificación
+                // **Notificación de nuevo mensaje**
                 NotificationCompat.Builder nb = new NotificationCompat.Builder(ctx, NOTIF_CHANNEL)
                         .setSmallIcon(R.drawable.ic_notification)
                         .setContentTitle("Nuevo mensaje de " + msg.fromAddress)
-                        .setContentText(msg.type.equals("text") ? msg.body : "Audio recibido")
+                        .setContentText(
+                                msg.type.equals("text")
+                                        ? msg.body
+                                        : "Audio recibido"
+                        )
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                         .setAutoCancel(true);
 
@@ -141,6 +153,7 @@ public class MailSyncWorker extends Worker {
             inbox.close(false);
             store.close();
 
+            // Guardar timestamp de última sincronización
             prefs.edit().putLong(KEY_LAST_SYNC, newLast).apply();
             return Result.success();
 
@@ -150,7 +163,7 @@ public class MailSyncWorker extends Worker {
         }
     }
 
-    /** Llama este método tras login para programar el worker periódico */
+    /** Programa el worker periódico tras login */
     public static void schedulePeriodicSync(Context ctx) {
         Constraints cons = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -168,6 +181,7 @@ public class MailSyncWorker extends Worker {
                         req
                 );
     }
+
     /** Fuerza un disparo inmediato del worker. */
     public static void forceSyncNow(Context ctx) {
         OneTimeWorkRequest req = new OneTimeWorkRequest.Builder(MailSyncWorker.class).build();
