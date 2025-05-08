@@ -31,14 +31,6 @@ public class PermissionHelper {
             list.add(android.Manifest.permission.RECORD_AUDIO);
         }
 
-        // Alarma
-        if (ContextCompat.checkSelfPermission(act,
-                Manifest.permission.SCHEDULE_EXACT_ALARM)
-                != PackageManager.PERMISSION_GRANTED) {
-            list.add(Manifest.permission.SCHEDULE_EXACT_ALARM);
-        }
-
-
         // Lectura de contactos
         if (ContextCompat.checkSelfPermission(act,
                 android.Manifest.permission.READ_CONTACTS)
