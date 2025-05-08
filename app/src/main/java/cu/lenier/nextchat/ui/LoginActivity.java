@@ -129,7 +129,7 @@ public class LoginActivity extends AppCompatActivity {
                     // 4) Arrancar servicio + worker
                     startMailService();
                     MailSyncWorker.schedulePeriodicSync(this);
-                    startActivity(new Intent(this, ChatListActivity.class));
+                    startActivity(new Intent(this, ProfileActivity.class));
                     finish();
                 });
             } catch (Exception e) {

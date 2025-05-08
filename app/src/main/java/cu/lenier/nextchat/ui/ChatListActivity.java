@@ -83,7 +83,6 @@ public class ChatListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_list);
 
-        // 1) Iniciar servicios de email y perfil
         Intent mailSvc = new Intent(this, MailService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(mailSvc);
@@ -92,20 +91,14 @@ public class ChatListActivity extends AppCompatActivity {
         }
         startService(new Intent(this, ProfileFetchService.class));
 
-        // 2) Toolbar estado inicial
         toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle("Esperando conexión...");
 
-        // 3) Configurar versión, RecyclerView y FAB
         setupVersionDialog();
         setupRecyclerView();
         setupFab();
-
-        // 4) Preparar NetworkCallback
         setupNetworkCallback();
-
-        // 5) Observers de datos
         observeContacts();
         observeUnreadCounts();
         loadAndApplyProfiles();
@@ -217,7 +210,7 @@ public class ChatListActivity extends AppCompatActivity {
                 for (String c : contacts) {
                     Message last = db.messageDao().getLastMessageSync(c);
                     if (last != null) {
-                        previews.put(c, last.type.equals("text") ? last.body : last.type);
+                        previews.put(c, android.text.TextUtils.equals(last.type, "text") ? last.body : last.type);
                         times.put(c, last.timestamp);
                     } else {
                         previews.put(c, "");
@@ -251,7 +244,6 @@ public class ChatListActivity extends AppCompatActivity {
         netCallback = new ConnectivityManager.NetworkCallback() {
             @Override
             public void onAvailable(@NonNull Network network) {
-                // Tan pronto haya red, mostramos el nombre de la app
                 runOnUiThread(() -> toolbar.setTitle(getString(R.string.app_name)));
             }
 

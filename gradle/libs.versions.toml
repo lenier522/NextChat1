@@ -25,6 +25,8 @@ cameraLifecycle = "1.5.0-alpha06"
 cameraView = "1.5.0-alpha06"
 glide = "5.0.0-rc01"
 lottie = "6.6.2"
+emojiGoogle = "0.21.0"
+emojiBundled = "1.2.0-alpha03"
 
 [libraries]
 audiowave-progressbar = { module = "com.github.alxrm:audiowave-progressbar", version.ref = "audiowaveProgressbar" }
@@ -52,6 +54,8 @@ camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", versi
 camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraView" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "lottie" }
+emoji-google = { group = "com.vanniktech", name = "emoji-google", version.ref = "emojiGoogle" }
+emoji-bundled = { group = "androidx.emoji", name = "emoji-bundled", version.ref = "emojiBundled" }
 
 
 [plugins]

@@ -7,6 +7,9 @@ import android.app.NotificationManager;
 import android.content.SharedPreferences;
 import android.os.Build;
 
+import androidx.emoji.bundled.BundledEmojiCompatConfig;
+import androidx.emoji.text.EmojiCompat;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +22,7 @@ public class AppConfig extends Application {
     private static AppConfig instance;
 
     private static final Map<String, String> VERIFIED_NAMES;
+
     static {
         Map<String, String> m = new HashMap<>();
         m.put("leniercruz02@nauta.cu", "Lenier");
@@ -41,6 +45,11 @@ public class AppConfig extends Application {
 
         // Seguimos programando el worker si ya estamos logueados
         scheduleWorkerIfNeeded();
+
+// Configurar EmojiCompat con el paquete Bundled (Google Emoji)
+        EmojiCompat.Config config = new BundledEmojiCompatConfig(this);
+        EmojiCompat.init(config);
+
     }
 
     // Eliminamos este método o lo dejamos vacío
@@ -52,7 +61,7 @@ public class AppConfig extends Application {
     private void scheduleWorkerIfNeeded() {
         SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE);
         String email = prefs.getString("email", "");
-        String pass  = prefs.getString("pass",  "");
+        String pass = prefs.getString("pass", "");
 
         if (!email.isEmpty() && !pass.isEmpty()) {
             MailSyncWorker.schedulePeriodicSync(this);

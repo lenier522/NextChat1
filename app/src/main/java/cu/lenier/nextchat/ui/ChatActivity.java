@@ -10,6 +10,8 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -38,6 +40,7 @@ import cu.lenier.nextchat.R;
 import cu.lenier.nextchat.adapter.MessageAdapter;
 import cu.lenier.nextchat.config.AppConfig;
 import cu.lenier.nextchat.data.AppDatabase;
+import cu.lenier.nextchat.emoji.EmojiPickerManager;
 import cu.lenier.nextchat.model.Message;
 import cu.lenier.nextchat.model.Profile;
 import cu.lenier.nextchat.util.MailHelper;
@@ -56,6 +59,8 @@ public class ChatActivity extends AppCompatActivity {
     private String contact, me;
     private MediaRecorder recorder;
     private String audioPath;
+
+    private EmojiPickerManager emojiPickerManager;
 
     private long lastIncomingTs = 0;
     private final Handler handler = new Handler();
@@ -110,8 +115,14 @@ public class ChatActivity extends AppCompatActivity {
 
         // Inputs
         et = findViewById(R.id.etMessage);
+        ImageButton btnEmoji = findViewById(R.id.btnEmoji);
         fab = findViewById(R.id.fabSend);
         ImageButton btnCamera = findViewById(R.id.btnCamera);
+
+        // ③ Inicializa tu EmojiPickerManager
+        //    rootView es la ConstraintLayout con id chat_root
+        View rootView = findViewById(R.id.chat_root);
+        emojiPickerManager = new EmojiPickerManager(this, rootView, et);
 
         // Observador de mensajes
         AppDatabase.getInstance(this)
@@ -144,6 +155,16 @@ public class ChatActivity extends AppCompatActivity {
                                 : R.mipmap.ic_send
                 );
             }
+        });
+
+        // ④ Override del click para alternar el panel de emojis
+        btnEmoji.setOnClickListener(v -> {
+            // cierra el teclado si está abierto
+            InputMethodManager imm = (InputMethodManager)
+                    getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
+            // muestra/oculta el picker
+            emojiPickerManager.toggle();
         });
 
         // Lanzar cámara
@@ -240,6 +261,10 @@ public class ChatActivity extends AppCompatActivity {
         super.onDestroy();
         handler.removeCallbacks(offlineRunnable);
         syncHandler.removeCallbacks(syncRunnable);
+        // ⑤ evita fugas cerrando el popup
+        if (emojiPickerManager != null) {
+            emojiPickerManager.dismiss();
+        }
     }
 
     private boolean checkAudioPerm() {

@@ -43,6 +43,9 @@ public class ProfileActivity extends AppCompatActivity {
     private Button    btnSave;
     private View      progressOverlay;
 
+    private static final String PREFS_NAME         = "profile_prefs";
+    private static final String KEY_PROFILE_SENT   = "profile_sent";
+
     private String photoUriString;
     private final Handler handler = new Handler();
 
@@ -51,6 +54,13 @@ public class ProfileActivity extends AppCompatActivity {
             handler.removeCallbacks(timeoutRunnable);
             hideProgress();
             if (ProfileSender.ACTION_PROFILE_SENT.equals(intent.getAction())) {
+                Snackbar.make(progressOverlay, "Bienvenido", Snackbar.LENGTH_LONG).show();
+                getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                        .edit()
+                        .putBoolean(KEY_PROFILE_SENT, true)
+                        .apply();
+                Intent i = new Intent(ProfileActivity.this, ChatListActivity.class);
+                startActivity(i);
                 finish();
             } else {
                 Snackbar.make(progressOverlay, "Error enviando perfil", Snackbar.LENGTH_LONG).show();
@@ -65,6 +75,13 @@ public class ProfileActivity extends AppCompatActivity {
 
     @Override protected void onCreate(@Nullable Bundle saved) {
         super.onCreate(saved);
+        // 0) Si ya enviamos el perfil, vamos directo al ChatListActivity
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        if (prefs.getBoolean(KEY_PROFILE_SENT, false)) {
+            startActivity(new Intent(this, ChatListActivity.class));
+            finish();
+            return;
+        }
         setContentView(R.layout.activity_profile);
 
         ivPhoto         = findViewById(R.id.ivPhoto);
@@ -80,8 +97,8 @@ public class ProfileActivity extends AppCompatActivity {
         progressOverlay = findViewById(R.id.progressOverlay);
 
         // Prefill email and disable editing
-        SharedPreferences prefs = getSharedPreferences("prefs", MODE_PRIVATE);
-        String savedEmail = prefs.getString("email", "");
+        SharedPreferences pref = getSharedPreferences("prefs", MODE_PRIVATE);
+        String savedEmail = pref.getString("email", "");
         etEmail.setText(savedEmail);
         etEmail.setEnabled(false);
 

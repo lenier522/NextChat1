@@ -19,6 +19,81 @@
     4-Se corrigieron errores menores.\n\n
     v 1.2.5\n\n
     Cambios \n\n
-    1-Errores corregidos
+    1-Errores corregidos \n\n
+    v 1.3.7 \n\n
+    Cambios \n\n
+    1-Se agregó un Onboarding al Inicio.\n
+    2-Se cambió el apartado de crar un Perfil para Inicio despúes del Login.\n
+    3-Se agregó la opcion de seleccionar emojis.\n
+    4-Se corrigieron errores.\n
     </string>
+
+
+    <!-- Onboarding -->
+    <string-array name="onboard_titles">
+        <item>Bienvenido a NextChat</item>
+        <item>Conéctate por Email</item>
+        <item>Chat en Tiempo Real</item>
+        <item>Chats Seguros</item>
+        <item>¿Dudas? FAQ</item>
+    </string-array>
+    <string-array name="onboard_descriptions">
+        <item>Descubre una nueva forma de comunicarte con tu correo.</item>
+        <item>Importa tus contactos automáticamente.</item>
+        <item>Todos tus chats en tiempo real.</item>
+        <item>Todos tus mensajes cifrados de extremo a extremo.</item>
+        <item>Consulta aquí las preguntas frecuentes.</item>
+    </string-array>
+    <string-array name="onboard_lottie">
+        <item>lottie/one.json</item>
+        <item>lottie/two.json</item>
+        <item>lottie/three.json</item>
+        <item>lottie/four.json</item>
+        <item>lottie/five.json</item>
+    </string-array>
+
+    <!-- FAQ -->
+    <string-array name="faq_questions">
+        <item>¿Qué es NextChat?</item>
+        <item>¿Puedo usar el chat sin cuenta de correo?</item>
+        <item>¿Como comienzo un nuevo Chat?</item>
+        <item>¿Puedo utilizar el correo Gmail?</item>
+        <item>¿Con que correo puedo utilizar la App?</item>
+        <item>¿Como puedo crear un correo Nauta?</item>
+        <item>¿Puedo crearme un perfil?</item>
+        <item>¿Puedo bloquear a un usuario en el chat?</item>
+        <item>¿Cómo activo el cifrado de mensajes?</item>
+        <item>¿Por qué no llegan mis mensajes?</item>
+        <item>¿Se pueden programar envíos de mensajes?</item>
+<!--        <item>¿Cómo silencio notificaciones del chat?</item>-->
+<!--        <item>¿Dónde encuentro mis borradores?</item>-->
+<!--        <item>¿Cómo compartir un chat por correo?</item>-->
+<!--        <item>¿Qué hace el modo "No molestar"?</item>-->
+        <item>¿Cómo denuncio contenido inapropiado?</item>
+    </string-array>
+
+    <string-array name="faq_answers">
+        <item>NextChat es una aplicación móvil para Android donde podrás chatear con tus amigos
+        a través del correo electrónico</item>
+        <item>No, ya que solo puedes chatear con el correo</item>
+        <item>En el boton de Más veras un icono donde podrás agregar un nuevo correo y empezar
+            una conversación con el.</item>
+        <item>Por el momento no se puede utilizar el Gmail en la Aplicación.</item>
+        <item>Por ahora solo puedes utilizar el correo Nauta de Etecsa.</item>
+        <item>El correo Nauta lo puedes crear desde los siguientes sitios:
+            https://www.nauta.cu  y  en  https://tienda.etecsa.cu. Pero en https://perf3ctsolutions.com/como-crear-un-correo-nauta/
+            encontraras una guia completa.</item>
+        <item>Si, puedes crearte el perfil cuando te loguees".</item>
+        <item>Por el momomento no se puede bloquear a ningun usuario.</item>
+        <item>El cifrado de extremo a extremo ya viene por defecto".</item>
+        <item>Verifica tu conexión . Si persiste, contactanos a leniercruz02@nauta.cu.</item>
+        <item>No, en las proximas versiones se incluirá.</item>
+<!--        <item>Mantén presionado el chat → Silenciar. Configura duración en notificaciones.</item>-->
+<!--        <item>En la vista de correos, desliza hacia la izquierda y selecciona la carpeta "Borradores".</item>-->
+<!--        <item>En el chat, toca los 3 puntos → Compartir → "Enviar por correo" (se creará un resumen).</item>-->
+<!--        <item>Bloquea todas las notificaciones excepto emergencias. Actívalo en Ajustes → Notificaciones.</item>-->
+        <item>Mantén presionado el mensaje → Reportar. Nuestro equipo revisará en 24 horas.</item>
+    </string-array>
+
+
 </resources>

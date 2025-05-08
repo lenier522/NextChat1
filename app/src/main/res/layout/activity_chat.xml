@@ -66,14 +66,14 @@
                 android:paddingEnd="12dp">
 
                 <!-- Emoji -->
-<!--                <ImageButton-->
-<!--                    android:id="@+id/btnEmoji"-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_emoji_24"-->
-<!--                    android:background="?attr/selectableItemBackgroundBorderless"-->
-<!--                    android:contentDescription="Emoji"-->
-<!--                    android:tint="@color/gray" />-->
+                <ImageButton
+                    android:id="@+id/btnEmoji"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_emoji_24"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Emoji"
+                    app:tint="@color/gray" />
 
                 <Space
                     android:layout_width="8dp"

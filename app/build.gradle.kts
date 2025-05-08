@@ -10,8 +10,8 @@ android {
         applicationId = "com.lenier.amarefree"
         minSdk = 24
         targetSdk = 36
-        versionCode = 55
-        versionName = "1.2.5"
+        versionCode = 60
+        versionName = "1.3.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -57,10 +57,11 @@ dependencies {
     implementation(libs.camera.view)
     implementation(libs.glide)
     implementation(libs.lottie)
+    implementation(libs.emoji.google)
+    implementation(libs.emoji.bundled)
     annotationProcessor(libs.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
     implementation(libs.audiowave.progressbar)
 }
