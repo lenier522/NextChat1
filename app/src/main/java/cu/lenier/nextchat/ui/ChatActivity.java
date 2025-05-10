@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -22,6 +23,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,7 +37,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 
-import cu.lenier.nextchat.BottomSheet.CameraBottomSheet;
 import cu.lenier.nextchat.R;
 import cu.lenier.nextchat.adapter.MessageAdapter;
 import cu.lenier.nextchat.config.AppConfig;
@@ -62,13 +63,22 @@ public class ChatActivity extends AppCompatActivity {
 
     private EmojiPickerManager emojiPickerManager;
 
+    private Message replyTo = null;
+    private View replyPreviewContainer;
+    private TextView tvReplyPreview;
+    private ImageButton btnCancelReply;
+
+    private FloatingActionButton fabScrollToBottom;
+
+
     private long lastIncomingTs = 0;
     private final Handler handler = new Handler();
     private final Runnable offlineRunnable = this::showLastSeen;
 
     private final Handler syncHandler = new Handler();
     private final Runnable syncRunnable = new Runnable() {
-        @Override public void run() {
+        @Override
+        public void run() {
             MailSyncWorker.forceSyncNow(ChatActivity.this);
             syncHandler.postDelayed(this, 5000);
         }
@@ -83,14 +93,14 @@ public class ChatActivity extends AppCompatActivity {
 
         // Recupera emails
         contact = getIntent().getStringExtra("contact");
-        me      = getSharedPreferences("prefs", MODE_PRIVATE)
+        me = getSharedPreferences("prefs", MODE_PRIVATE)
                 .getString("email", "");
 
         // Toolbar
         toolbar = findViewById(R.id.toolbar_chat);
         setSupportActionBar(toolbar);
         contact = getIntent().getStringExtra("contact");
-        me      = getSharedPreferences("prefs", MODE_PRIVATE).getString("email", "");
+        me = getSharedPreferences("prefs", MODE_PRIVATE).getString("email", "");
 
         // Inicialmente ponemos el email
         getSupportActionBar().setTitle(contact);
@@ -112,6 +122,18 @@ public class ChatActivity extends AppCompatActivity {
         rv.setLayoutManager(new LinearLayoutManager(this));
         adapter = new MessageAdapter();
         rv.setAdapter(adapter);
+
+
+        // Reply preview
+        replyPreviewContainer = findViewById(R.id.replyPreviewContainer);
+        tvReplyPreview        = findViewById(R.id.tvReplyPreview);
+        btnCancelReply        = findViewById(R.id.btnCancelReply);
+        btnCancelReply.setOnClickListener(v -> exitReplyMode());
+
+
+
+
+
 
         // Inputs
         et = findViewById(R.id.etMessage);
@@ -146,9 +168,21 @@ public class ChatActivity extends AppCompatActivity {
                     updateOnlineStatus();
                 });
 
+        // Swipe to reply
+        new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.RIGHT) {
+            @Override public boolean onMove(@NonNull RecyclerView rv, @NonNull RecyclerView.ViewHolder vh, @NonNull RecyclerView.ViewHolder t) { return false; }
+            @Override public void onSwiped(@NonNull RecyclerView.ViewHolder vh, int dir) {
+                replyTo = adapter.getMessageAt(vh.getAdapterPosition());
+                enterReplyMode(replyTo);
+                adapter.notifyItemChanged(vh.getAdapterPosition());
+            }
+        }).attachToRecyclerView(rv);
+
+
         // Cambiar icono del FAB
         et.addTextChangedListener(new SimpleTextWatcher() {
-            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
+            @Override
+            public void onTextChanged(CharSequence s, int st, int b, int c) {
                 fab.setImageResource(
                         s.toString().trim().isEmpty()
                                 ? R.mipmap.ic_mic
@@ -158,14 +192,51 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         // ④ Override del click para alternar el panel de emojis
+// Dentro de onCreate(), justo después de inicializar emojiPickerManager:
         btnEmoji.setOnClickListener(v -> {
-            // cierra el teclado si está abierto
             InputMethodManager imm = (InputMethodManager)
                     getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
-            // muestra/oculta el picker
-            emojiPickerManager.toggle();
+
+            if (emojiPickerManager.isShowing()) {
+                // 1) Si ahora está abierto el panel de emojis, lo cerramos...
+                emojiPickerManager.dismiss();
+                // 2) ...y volvemos a abrir el teclado
+                et.requestFocus();
+                imm.showSoftInput(et, InputMethodManager.SHOW_IMPLICIT);
+                // 3) Cambiamos el icono a emoji
+                btnEmoji.setImageResource(R.drawable.ic_emoji_24);
+            } else {
+                // 1) Si el panel de emojis está cerrado, ocultamos teclado
+                imm.hideSoftInputFromWindow(et.getWindowToken(), 0);
+                et.clearFocus();
+                // 2) Abrimos el panel de emojis
+                //    Con un pequeño delay para que no pelee con el teclado:
+                et.postDelayed(() -> {
+                    emojiPickerManager.toggle();
+                    // 3) Cambiamos el icono a teclado
+                    btnEmoji.setImageResource(R.drawable.ic_keyboard);
+                }, 100);
+            }
         });
+
+        fabScrollToBottom = findViewById(R.id.fabScrollToBottom);
+        // 1) Listener de scroll: muestra/oculta el FAB
+        rv.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                // dy>0 cuando bajas, dy<0 cuando subes
+                boolean atBottom = !recyclerView.canScrollVertically(1);
+                fabScrollToBottom.setVisibility(atBottom ? View.GONE : View.VISIBLE);
+            }
+        });
+        // 2) Al hacer clic, desplázate al último mensaje
+        fabScrollToBottom.setOnClickListener(v -> {
+            int last = adapter.getItemCount() - 1;
+            if (last >= 0) {
+                rv.smoothScrollToPosition(last);
+            }
+        });
+
 
         // Lanzar cámara
         btnCamera.setOnClickListener(v -> {
@@ -195,11 +266,42 @@ public class ChatActivity extends AppCompatActivity {
                 m.fromAddress   = me;
                 m.toAddress     = contact;
                 m.subject       = "NextChat";
-                m.body          = txt;
-                m.attachmentPath= null;
-                m.timestamp     = System.currentTimeMillis();
-                m.sent = true; m.read = true; m.type = "text";
-                m.sendState = Message.STATE_PENDING;
+                // ---- INICIA LÓGICA DE REPLY ----
+                if (replyTo != null) {
+                    m.inReplyToId   = replyTo.id;
+                    m.inReplyToBody = replyTo.body;
+
+                    String snippet;
+                    // Verifica si el mensaje original es texto y tiene cuerpo
+                    if ("text".equals(replyTo.type) && replyTo.body != null && !replyTo.body.isEmpty()) {
+                        snippet = replyTo.body.length() > 30
+                                ? replyTo.body.substring(0, 30) + "…"
+                                : replyTo.body;
+                    } else {
+                        // Mensaje original es audio/imagen (o texto vacío)
+                        switch (replyTo.type) {
+                            case "audio":
+                                snippet = "[Audio]";
+                                break;
+                            case "image":
+                                snippet = "[Imagen]";
+                                break;
+                            default:
+                                snippet = "[Mensaje]";
+                        }
+                    }
+                    m.body = "↳ " + snippet + "\n" + txt;
+                } else {
+                    m.body = txt;
+                }
+                exitReplyMode();
+                // ---- FIN LÓGICA DE REPLY ----
+                m.attachmentPath = null;
+                m.timestamp      = System.currentTimeMillis();
+                m.sent           = true;
+                m.read           = true;
+                m.type           = "text";
+                m.sendState      = Message.STATE_PENDING;
                 MailHelper.sendEmail(this, m);
             } else {
                 Toast.makeText(this,
@@ -207,6 +309,7 @@ public class ChatActivity extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
             }
         });
+
 
         // Grabación de audio
         fab.setOnLongClickListener(v -> {
@@ -222,10 +325,13 @@ public class ChatActivity extends AppCompatActivity {
 
         // NetworkCallback: online/offline
         netCallback = new ConnectivityManager.NetworkCallback() {
-            @Override public void onAvailable(@NonNull Network network) {
+            @Override
+            public void onAvailable(@NonNull Network network) {
                 runOnUiThread(() -> updateOnlineStatus());
             }
-            @Override public void onLost(@NonNull Network network) {
+
+            @Override
+            public void onLost(@NonNull Network network) {
                 runOnUiThread(() -> {
                     if (getSupportActionBar() != null)
                         getSupportActionBar().setSubtitle("Sin conexión");
@@ -235,6 +341,37 @@ public class ChatActivity extends AppCompatActivity {
 
         // Iniciar loop de sincronización
         syncHandler.post(syncRunnable);
+    }
+
+    private void enterReplyMode(Message original) {
+        replyTo = original;
+        String snippet;
+
+        // Verifica si el mensaje original es de tipo texto y tiene cuerpo
+        if ("text".equals(original.type) && original.body != null && !original.body.isEmpty()) {
+            snippet = original.body.length() > 30
+                    ? original.body.substring(0, 30) + "…"
+                    : original.body;
+        } else {
+            // Mensaje es audio/imagen (o texto vacío)
+            switch (original.type) {
+                case "audio":
+                    snippet = "[Audio]";
+                    break;
+                case "image":
+                    snippet = "[Imagen]";
+                    break;
+                default:
+                    snippet = "[Mensaje]"; // Tipo desconocido
+            }
+        }
+
+        tvReplyPreview.setText("↳ " + snippet);
+        replyPreviewContainer.setVisibility(View.VISIBLE);
+    }
+    private void exitReplyMode() {
+        replyTo = null;
+        replyPreviewContainer.setVisibility(View.GONE);
     }
 
     @Override
@@ -310,13 +447,15 @@ public class ChatActivity extends AppCompatActivity {
         Toast.makeText(this,
                 "Enviando audio...", Toast.LENGTH_SHORT).show();
         Message m = new Message();
-        m.fromAddress   = me;
-        m.toAddress     = contact;
-        m.subject       = "NextChat Audio";
-        m.body          = "";
-        m.attachmentPath= audioPath;
-        m.timestamp     = System.currentTimeMillis();
-        m.sent = true; m.read = true; m.type = "audio";
+        m.fromAddress = me;
+        m.toAddress = contact;
+        m.subject = "NextChat Audio";
+        m.body = "";
+        m.attachmentPath = audioPath;
+        m.timestamp = System.currentTimeMillis();
+        m.sent = true;
+        m.read = true;
+        m.type = "audio";
         m.sendState = Message.STATE_PENDING;
         MailHelper.sendAudioEmail(this, m);
     }

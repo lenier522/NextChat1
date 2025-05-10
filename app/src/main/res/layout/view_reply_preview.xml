@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/gray"
+    android:padding="8dp">
+
+    <TextView
+        android:id="@+id/tvReplyPreview"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start|center_vertical"
+        android:layout_marginEnd="32dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/black"
+        android:textStyle="italic"
+        android:textSize="14sp"/>
+
+    <ImageButton
+        android:id="@+id/btnCancelReply"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="end|center_vertical"
+        android:src="@drawable/ic_close_24"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Cancelar respuesta"/>
+</FrameLayout>

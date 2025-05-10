@@ -14,11 +14,13 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar_chat"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Mensajes -->
@@ -29,113 +31,141 @@
         android:paddingTop="4dp"
         android:paddingBottom="4dp"
         app:layout_constraintTop_toBottomOf="@id/appBarLayout"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintBottom_toTopOf="@+id/inputContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- Barra de entrada y FAB -->
+    <!-- FAB para ir al último mensaje -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabScrollToBottom"
+        style="?attr/floatingActionButtonSmallStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="Ir al final"
+        app:srcCompat="@drawable/ic_arrow_downward_24"
+        app:backgroundTint="@color/colorAccent"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/inputContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_margin="16dp"/>
+
+    <!-- Contenedor vertical para preview + input -->
     <LinearLayout
-        android:id="@+id/linearLayout"
+        android:id="@+id/inputContainer"
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- 1) CardView con peso para ocupar todo el espacio -->
-        <androidx.cardview.widget.CardView
-            android:id="@+id/input_bar"
-            android:layout_width="0dp"
-            android:layout_height="56dp"
-            android:layout_margin="8dp"
-            android:layout_weight="1"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="2dp">
+        <!-- Preview de respuesta -->
+        <include
+            android:id="@+id/replyPreviewContainer"
+            layout="@layout/view_reply_preview"
+            android:visibility="gone"/>
 
-            <!-- AQUÍ tu messageBox directamente -->
-            <LinearLayout
-                android:id="@+id/messageBox"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@drawable/bg_edittext_round"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp">
+        <!-- Barra de entrada y FAB -->
+        <LinearLayout
+            android:id="@+id/linearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="4dp">
 
-                <!-- Emoji -->
-                <ImageButton
-                    android:id="@+id/btnEmoji"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_emoji_24"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Emoji"
-                    app:tint="@color/gray" />
+            <!-- 1) CardView con peso para ocupar todo el espacio -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/input_bar"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_margin="8dp"
+                android:layout_weight="1"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="2dp">
 
-                <Space
-                    android:layout_width="8dp"
-                    android:layout_height="match_parent"/>
-
-                <!-- EditText de mensaje -->
-                <EditText
-                    android:id="@+id/etMessage"
-                    android:layout_width="0dp"
+                <!-- AQUÍ tu messageBox directamente -->
+                <LinearLayout
+                    android:id="@+id/messageBox"
+                    android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:hint="Mensaje"
-                    android:background="@android:color/transparent"
-                    android:inputType="textMultiLine"
-                    android:maxLines="4"
-                    android:textColor="@color/black"
-                    android:textSize="16sp"
-                    android:paddingTop="8dp"
-                    android:paddingBottom="8dp"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_edittext_round"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="5dp">
 
-                <Space
-                    android:layout_width="14dp"
-                    android:layout_height="match_parent" />
+                    <!-- Emoji -->
+                    <ImageButton
+                        android:id="@+id/btnEmoji"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_emoji_24"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Emoji"
+                        app:tint="@color/gray" />
 
-                <!-- Cámara -->
-                <ImageButton
-                    android:id="@+id/btnCamera"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_camera"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:contentDescription="Cámara"
-                    app:tint="@color/gray" />
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="match_parent"/>
 
-                <Space
-                    android:layout_width="12dp"
-                    android:layout_height="match_parent"/>
+                    <!-- EditText de mensaje -->
+                    <EditText
+                        android:id="@+id/etMessage"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:hint="Mensaje"
+                        android:background="@android:color/transparent"
+                        android:inputType="textMultiLine"
+                        android:maxLines="4"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"/>
 
-                <!-- Menú extra -->
-<!--                <ImageButton-->
-<!--                    android:id="@+id/btnMenu"-->
-<!--                    android:layout_width="24dp"-->
-<!--                    android:layout_height="24dp"-->
-<!--                    android:src="@drawable/ic_menu_24"-->
-<!--                    android:background="?attr/selectableItemBackgroundBorderless"-->
-<!--                    android:contentDescription="Más opciones"-->
-<!--                    android:tint="@color/gray" />-->
-            </LinearLayout>
+                    <Space
+                        android:layout_width="14dp"
+                        android:layout_height="match_parent" />
 
-        </androidx.cardview.widget.CardView>
+                    <!-- Cámara -->
+                    <ImageButton
+                        android:id="@+id/btnCamera"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_camera"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Cámara"
+                        app:tint="@color/gray" />
 
-        <!-- 2) FAB para enviar/grabar -->
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabSend"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_marginTop="7dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="-28dp"
-            android:contentDescription="Enviar o grabar"
-            app:backgroundTint="@color/colorAccent"
-            app:srcCompat="@mipmap/ic_mic"/>
+                    <Space
+                        android:layout_width="12dp"
+                        android:layout_height="match_parent"/>
+
+                    <!-- Menú extra -->
+                    <!--                <ImageButton-->
+                    <!--                    android:id="@+id/btnMenu"-->
+                    <!--                    android:layout_width="24dp"-->
+                    <!--                    android:layout_height="24dp"-->
+                    <!--                    android:src="@drawable/ic_menu_24"-->
+                    <!--                    android:background="?attr/selectableItemBackgroundBorderless"-->
+                    <!--                    android:contentDescription="Más opciones"-->
+                    <!--                    android:tint="@color/gray" />-->
+                </LinearLayout>
+
+            </androidx.cardview.widget.CardView>
+
+
+            <!-- 2) FAB para enviar/grabar -->
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabSend"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginTop="7dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginBottom="-28dp"
+                android:contentDescription="Enviar o grabar"
+                app:backgroundTint="@color/colorAccent"
+                app:srcCompat="@mipmap/ic_mic"/>
+        </LinearLayout>
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>

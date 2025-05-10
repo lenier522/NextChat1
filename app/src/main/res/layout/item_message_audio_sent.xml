@@ -5,6 +5,17 @@
     android:layout_height="wrap_content"
     android:padding="4dp">
 
+    <!-- NUEVO: TextView para la cita de reply -->
+    <TextView
+        android:id="@+id/tvReplyPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone"
+        android:textColor="#666"
+        android:maxLines="1"
+        android:ellipsize="end"/>
+
     <LinearLayout
         android:id="@+id/container"
         android:layout_width="wrap_content"
@@ -13,9 +24,10 @@
         android:orientation="horizontal"
         android:background="@drawable/bg_bubble_sent"
         android:padding="12dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:layout_marginTop="24dp">
 
-        <ImageButton
+    <ImageButton
             android:id="@+id/btnPlay"
             android:layout_width="35dp"
             android:layout_height="35dp"

@@ -4,15 +4,27 @@
     android:layout_height="wrap_content"
     android:padding="4dp">
 
+    <!-- NUEVO: TextView para la cita de reply -->
+    <TextView
+        android:id="@+id/tvReplyPreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:visibility="gone"
+        android:textColor="#666"
+        android:maxLines="1"
+        android:ellipsize="end"/>
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
         android:orientation="vertical"
         android:background="@drawable/bg_bubble_received"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:layout_marginTop="24dp">
 
-        <ImageView
+    <ImageView
             android:id="@+id/ivImage"
             android:layout_width="200dp"
             android:layout_height="200dp"

@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 import cu.lenier.nextchat.model.Message;
 import cu.lenier.nextchat.model.Profile;
 
-@Database(entities = { Message.class, Profile.class }, version = 5, exportSchema = false)
+@Database(entities = { Message.class, Profile.class }, version = 6, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
     public abstract MessageDao messageDao();
     public abstract ProfileDao profileDao();
@@ -48,6 +48,13 @@ public abstract class AppDatabase extends RoomDatabase {
             );
         }
     };
+    // Nueva migración de v5 a v6 para agregar campos de reply
+    private static final Migration MIGRATION_5_6 = new Migration(5, 6) {
+        @Override public void migrate(@NonNull SupportSQLiteDatabase db) {
+            db.execSQL("ALTER TABLE messages ADD COLUMN inReplyToId INTEGER DEFAULT 0 NOT NULL");
+            db.execSQL("ALTER TABLE messages ADD COLUMN inReplyToBody TEXT");
+        }
+    };
 
     public static AppDatabase getInstance(Context ctx) {
         if (INSTANCE == null) {
@@ -58,7 +65,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "mailchat_db"
                             )
-                            .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
+                            .addMigrations(MIGRATION_3_4, MIGRATION_4_5,MIGRATION_5_6)
                             .build();
                 }
             }

@@ -28,4 +28,6 @@ public class Message {
     public boolean read;
     public String  type;      // "text" o "audio" o "imagen"
     public int     sendState; // 0=failed,1=pending,2=sent
+    public long   inReplyToId;      // ID del mensaje original
+    public String inReplyToBody;    // Texto del mensaje original
 }
