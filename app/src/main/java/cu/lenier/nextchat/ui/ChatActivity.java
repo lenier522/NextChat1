@@ -65,7 +65,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private Message replyTo = null;
     private View replyPreviewContainer;
-    private TextView tvReplyPreview;
+    private TextView tvReplyPreview, tvReplyType;
     private ImageButton btnCancelReply;
 
     private FloatingActionButton fabScrollToBottom;
@@ -127,6 +127,7 @@ public class ChatActivity extends AppCompatActivity {
         // Reply preview
         replyPreviewContainer = findViewById(R.id.replyPreviewContainer);
         tvReplyPreview        = findViewById(R.id.tvReplyPreview);
+        tvReplyType = findViewById(R.id.tvReplyType);
         btnCancelReply        = findViewById(R.id.btnCancelReply);
         btnCancelReply.setOnClickListener(v -> exitReplyMode());
 
@@ -345,29 +346,49 @@ public class ChatActivity extends AppCompatActivity {
 
     private void enterReplyMode(Message original) {
         replyTo = original;
-        String snippet;
 
-        // Verifica si el mensaje original es de tipo texto y tiene cuerpo
-        if ("text".equals(original.type) && original.body != null && !original.body.isEmpty()) {
-            snippet = original.body.length() > 30
-                    ? original.body.substring(0, 30) + "…"
-                    : original.body;
-        } else {
-            // Mensaje es audio/imagen (o texto vacío)
-            switch (original.type) {
-                case "audio":
-                    snippet = "[Audio]";
-                    break;
-                case "image":
-                    snippet = "[Imagen]";
-                    break;
-                default:
-                    snippet = "[Mensaje]"; // Tipo desconocido
-            }
+        // Determinar tipo de mensaje
+        String typeLabel;
+        int iconRes;
+
+        switch(original.type) {
+            case "text":
+                typeLabel = "Mensaje";
+                iconRes = R.drawable.ic_text_quote;
+                break;
+            case "audio":
+                typeLabel = "Audio";
+                iconRes = R.drawable.ic_audio_wave;
+                break;
+            case "image":
+                typeLabel = "Imagen";
+                iconRes = R.drawable.ic_image_frame;
+                break;
+            default:
+                typeLabel = "Mensaje";
+                iconRes = R.drawable.ic_quote;
         }
 
-        tvReplyPreview.setText("↳ " + snippet);
+        // Configurar vista solo si existe
+        if (tvReplyType != null) {
+            tvReplyType.setCompoundDrawablesRelativeWithIntrinsicBounds(iconRes, 0, 0, 0);
+            tvReplyType.setText(typeLabel);
+        }
+
+        // Configurar preview
+        String previewText = "text".equals(original.type) && original.body != null
+                ? original.body
+                : original.type.equals("image") ? "Toca para ver" : "Toca para escuchar";
+
+        tvReplyPreview.setText(previewText);
+
+        // Animación
         replyPreviewContainer.setVisibility(View.VISIBLE);
+        replyPreviewContainer.setAlpha(0f);
+        replyPreviewContainer.animate()
+                .alpha(1f)
+                .setDuration(200)
+                .start();
     }
     private void exitReplyMode() {
         replyTo = null;

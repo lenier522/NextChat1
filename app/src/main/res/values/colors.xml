@@ -9,4 +9,10 @@
     <color name="colorAccent">#7C76F1</color>
 
     <color name="gray">#DD8B8888</color>
+
+    <!-- res/values/colors.xml -->
+    <color name="surface_container_lowest">#F7F7F7</color>
+    <color name="outline_variant">#C4C7C6</color>
+
+
 </resources>

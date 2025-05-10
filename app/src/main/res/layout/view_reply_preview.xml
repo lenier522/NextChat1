@@ -1,21 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/replyPreviewContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/gray"
-    android:padding="8dp">
+    android:paddingVertical="10dp"
+    android:background="@drawable/bg_reply_preview">
 
-    <TextView
-        android:id="@+id/tvReplyPreview"
+    <!-- Línea lateral acentuada -->
+    <View
+        android:id="@+id/replyAccent"
+        android:layout_width="4dp"
+        android:layout_height="40dp"
+        android:background="?attr/colorPrimary"
+        android:layout_marginStart="8dp"
+        android:layout_marginVertical="4dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+    <!-- Contenido principal -->
+    <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="start|center_vertical"
-        android:layout_marginEnd="32dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="@color/black"
-        android:textStyle="italic"
-        android:textSize="14sp"/>
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="48dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintStart_toEndOf="@id/replyAccent"
+        app:layout_constraintEnd_toStartOf="@id/btnCancelReply"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <TextView
+            android:id="@+id/tvReplyType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:drawablePadding="6dp"
+            android:maxLines="1"
+            android:letterSpacing="0.02"/>
+
+        <TextView
+            android:id="@+id/tvReplyPreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+            android:textColor="?attr/colorOnSurface"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:lineSpacingExtra="2sp"
+            android:layout_marginTop="2dp"/>
+
+    </LinearLayout>
 
     <ImageButton
         android:id="@+id/btnCancelReply"
@@ -23,6 +62,9 @@
         android:layout_height="24dp"
         android:layout_gravity="end|center_vertical"
         android:src="@drawable/ic_close_24"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Cancelar respuesta"/>
-</FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
