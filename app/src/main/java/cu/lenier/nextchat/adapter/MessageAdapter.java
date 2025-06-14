@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -39,13 +40,13 @@ import rm.com.audiowave.OnSamplingListener;
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = "MessageAdapter";
 
-    private static final int TYPE_DATE           = 0;
-    private static final int TYPE_SENT           = 1;
-    private static final int TYPE_AUDIO_SENT     = 2;
-    private static final int TYPE_RECEIVED       = 3;
-    private static final int TYPE_AUDIO_RECV     = 4;
-    private static final int TYPE_IMAGE_SENT     = 5;
-    private static final int TYPE_IMAGE_RECV     = 6;
+    private static final int TYPE_DATE = 0;
+    private static final int TYPE_SENT = 1;
+    private static final int TYPE_AUDIO_SENT = 2;
+    private static final int TYPE_RECEIVED = 3;
+    private static final int TYPE_AUDIO_RECV = 4;
+    private static final int TYPE_IMAGE_SENT = 5;
+    private static final int TYPE_IMAGE_RECV = 6;
 
     private final Handler uiHandler = new Handler();
     private final List<Object> items = new ArrayList<>();
@@ -95,7 +96,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return items.size();
     }
 
-    @NonNull @Override
+    @NonNull
+    @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int vt) {
         LayoutInflater inf = LayoutInflater.from(parent.getContext());
         if (vt == TYPE_DATE) {
@@ -104,12 +106,24 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
         int layout;
         switch (vt) {
-            case TYPE_SENT:        layout = R.layout.item_message_sent;           break;
-            case TYPE_AUDIO_SENT:  layout = R.layout.item_message_audio_sent;     break;
-            case TYPE_RECEIVED:    layout = R.layout.item_message_received;       break;
-            case TYPE_AUDIO_RECV:  layout = R.layout.item_message_audio_received; break;
-            case TYPE_IMAGE_SENT:  layout = R.layout.item_message_image_sent;     break;
-            default:               layout = R.layout.item_message_image_received; break;
+            case TYPE_SENT:
+                layout = R.layout.item_message_sent;
+                break;
+            case TYPE_AUDIO_SENT:
+                layout = R.layout.item_message_audio_sent;
+                break;
+            case TYPE_RECEIVED:
+                layout = R.layout.item_message_received;
+                break;
+            case TYPE_AUDIO_RECV:
+                layout = R.layout.item_message_audio_received;
+                break;
+            case TYPE_IMAGE_SENT:
+                layout = R.layout.item_message_image_sent;
+                break;
+            default:
+                layout = R.layout.item_message_image_received;
+                break;
         }
         View v = inf.inflate(layout, parent, false);
         return new MessageVH(v, vt);
@@ -131,10 +145,12 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // ViewHolder para los headers de fecha
     static class DateVH extends RecyclerView.ViewHolder {
         private final TextView tvDate;
+
         DateVH(View itemView) {
             super(itemView);
             tvDate = itemView.findViewById(R.id.tvDateHeader);
         }
+
         void bind(String date) {
             tvDate.setText(date);
         }
@@ -142,7 +158,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     // Tu ViewHolder original renombrado
     class MessageVH extends RecyclerView.ViewHolder {
-        TextView tvReplyQuote,tvBody, tvTime, tvDuration;
+        TextView tvReplyQuote, tvBody, tvTime, tvDuration;
         ImageView ivState, ivImage;
         ImageButton btnPlay;
         AudioWaveView waveform;
@@ -150,8 +166,12 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         private MediaPlayer mp;
         private Visualizer visualizer;
 
+        ViewGroup replyContainer;
+        TextView tvReplyType, tvReplyContent;
+
         private final Runnable updater = new Runnable() {
-            @Override public void run() {
+            @Override
+            public void run() {
                 if (mp != null && mp.isPlaying()) {
                     int pos = mp.getCurrentPosition();
                     int dur = mp.getDuration();
@@ -166,16 +186,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             super(iv);
             type = t;
             tvReplyQuote = iv.findViewById(R.id.tvReplyPreview);
+            replyContainer = iv.findViewById(R.id.replyContainer);
+            tvReplyType = iv.findViewById(R.id.tvReplyType);
+            tvReplyContent = iv.findViewById(R.id.tvReplyContent);
+
             if (type == TYPE_SENT || type == TYPE_RECEIVED) {
                 tvBody = iv.findViewById(R.id.tvBody);
             } else if (type == TYPE_IMAGE_SENT || type == TYPE_IMAGE_RECV) {
                 ivImage = iv.findViewById(R.id.ivImage);
             } else {
-                btnPlay    = iv.findViewById(R.id.btnPlay);
-                waveform   = iv.findViewById(R.id.waveform);
+                btnPlay = iv.findViewById(R.id.btnPlay);
+                waveform = iv.findViewById(R.id.waveform);
                 tvDuration = iv.findViewById(R.id.tvDuration);
             }
-            tvTime  = iv.findViewById(R.id.tvTime);
+            tvTime = iv.findViewById(R.id.tvTime);
             ivState = iv.findViewById(R.id.ivState);
 
             iv.setOnClickListener(view -> {
@@ -184,21 +208,24 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 if (m.sent && m.sendState == Message.STATE_FAILED) {
                     new AlertDialog.Builder(view.getContext())
                             .setTitle("Error al enviar")
-                            .setItems(new CharSequence[]{"Reintentar","Eliminar"}, (d,w) -> {
+                            .setItems(new CharSequence[]{"Reintentar", "Eliminar"}, (d, w) -> {
                                 if (w == 0) Executors.newSingleThreadExecutor().execute(() -> {
                                     m.sendState = Message.STATE_PENDING;
                                     dao.update(m);
-                                    if ("text".equals(m.type)) MailHelper.sendEmail(view.getContext(), m);
-                                    else if ("audio".equals(m.type)) MailHelper.sendAudioEmail(view.getContext(), m);
+                                    if ("text".equals(m.type))
+                                        MailHelper.sendEmail(view.getContext(), m);
+                                    else if ("audio".equals(m.type))
+                                        MailHelper.sendAudioEmail(view.getContext(), m);
                                     else MailHelper.sendImageEmail(view.getContext(), m);
                                 });
-                                else Executors.newSingleThreadExecutor().execute(() -> dao.deleteById(m.id));
+                                else
+                                    Executors.newSingleThreadExecutor().execute(() -> dao.deleteById(m.id));
                             }).show();
                 } else {
                     new AlertDialog.Builder(view.getContext())
                             .setTitle("Eliminar mensaje")
                             .setMessage("¿Eliminar este mensaje?")
-                            .setPositiveButton("Eliminar", (d,w) -> Executors.newSingleThreadExecutor()
+                            .setPositiveButton("Eliminar", (d, w) -> Executors.newSingleThreadExecutor()
                                     .execute(() -> dao.deleteById(m.id)))
                             .setNegativeButton("Cancelar", null)
                             .show();
@@ -207,28 +234,60 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         void bind(Message m) throws IOException {
-            // Cita reply
-            if (tvReplyQuote != null) {
-                if (m.inReplyToBody != null) {
-                    tvReplyQuote.setVisibility(View.VISIBLE);
-                    String snip = m.inReplyToBody.length() > 30
-                            ? m.inReplyToBody.substring(0, 30) + "…"
-                            : m.inReplyToBody;
-                    tvReplyQuote.setText("↳ " + snip);
-                } else {
-                    tvReplyQuote.setVisibility(View.GONE);
+            // Cita reply (dentro de MessageVH.bind)
+            if (m.inReplyToType != null) {
+                replyContainer.setVisibility(View.VISIBLE);
+
+                // — 2. Elegir icono y texto del preview según el tipo —
+                switch (m.inReplyToType) {
+                    case "audio":
+                        tvReplyType.setCompoundDrawablesWithIntrinsicBounds(
+                                R.drawable.ic_audio_wave, 0, 0, 0);
+                        tvReplyType.setText("Audio");
+                        tvReplyContent.setText("Toca para escuchar");
+                        break;
+
+                    case "image":
+                        tvReplyType.setCompoundDrawablesWithIntrinsicBounds(
+                                R.drawable.ic_image_frame, 0, 0, 0);
+                        tvReplyType.setText("Imagen");
+                        tvReplyContent.setText("Toca para ver");
+                        break;
+
+                    default:  // texto
+                        tvReplyType.setCompoundDrawablesWithIntrinsicBounds(
+                                R.drawable.ic_text_quote, 0, 0, 0);
+                        tvReplyType.setText("Mensaje");
+                        String body = m.inReplyToBody != null ? m.inReplyToBody : "";
+                        String snip = body.length() > 30
+                                ? body.substring(0, 30) + "…"
+                                : body;
+                        tvReplyContent.setText(snip);
+                        break;
                 }
+            } else {
+                replyContainer.setVisibility(View.GONE);
             }
+
+
             // Cuerpo
             if (type == TYPE_SENT || type == TYPE_RECEIVED) {
                 tvBody.setText(m.body);
                 tvTime.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault())
                         .format(new Date(m.timestamp)));
             } else if (type == TYPE_IMAGE_SENT || type == TYPE_IMAGE_RECV) {
-                File f = new File(m.attachmentPath);
-                Glide.with(ivImage.getContext())
-                        .load(f)
-                        .into(ivImage);
+                if (m.attachmentPath!=null && m.attachmentPath.startsWith("drawable://")) {
+                    String name = m.attachmentPath.substring("drawable://".length());
+                    int resId = ivImage.getContext().getResources()
+                            .getIdentifier(name, "drawable", ivImage.getContext().getPackageName());
+                    Glide.with(ivImage.getContext()).load(resId).into(ivImage);
+
+                }else {
+                    File f = new File(m.attachmentPath);
+                    Glide.with(ivImage.getContext())
+                            .load(f)
+                            .into(ivImage);
+                }
                 tvTime.setText(new SimpleDateFormat("hh:mm a", Locale.getDefault())
                         .format(new Date(m.timestamp)));
             } else {
@@ -240,17 +299,18 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                         mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                 );
                 mmr.release();
-                tvDuration.setText(new SimpleDateFormat("mm:ss",Locale.getDefault())
+                tvDuration.setText(new SimpleDateFormat("mm:ss", Locale.getDefault())
                         .format(new Date(dur)));
                 waveform.setProgress(0f);
                 btnPlay.setOnClickListener(v -> {
-                    if (mp != null && mp.isPlaying()) stop(); else play(m);
+                    if (mp != null && mp.isPlaying()) stop();
+                    else play(m);
                 });
             }
             if (ivState != null) {
                 if (m.sent) {
                     int res = R.mipmap.ic_state_failed;
-                    if (m.sendState == Message.STATE_PENDING)   res = R.mipmap.ic_state_pending;
+                    if (m.sendState == Message.STATE_PENDING) res = R.mipmap.ic_state_pending;
                     else if (m.sendState == Message.STATE_SENT) res = R.mipmap.ic_state_sent;
                     ivState.setImageResource(res);
                     ivState.setVisibility(View.VISIBLE);
@@ -274,10 +334,15 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                             @Override
                             public void onWaveFormDataCapture(Visualizer vis, byte[] data, int rate) {
                                 waveform.setRawData(data, new OnSamplingListener() {
-                                    @Override public void onComplete() { }
+                                    @Override
+                                    public void onComplete() {
+                                    }
                                 });
                             }
-                            @Override public void onFftDataCapture(Visualizer vis, byte[] fft, int rate) { }
+
+                            @Override
+                            public void onFftDataCapture(Visualizer vis, byte[] fft, int rate) {
+                            }
                         },
                         Visualizer.getMaxCaptureRate() / 2,
                         true,  // waveform
@@ -301,7 +366,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 visualizer = null;
             }
             if (mp != null) {
-                try { mp.stop(); } catch (IllegalStateException ignored) {}
+                try {
+                    mp.stop();
+                } catch (IllegalStateException ignored) {
+                }
                 mp.release();
                 mp = null;
             }

@@ -1,4 +1,3 @@
-// CameraBottomSheet.java
 package cu.lenier.nextchat.BottomSheet;
 
 import android.content.Context;
@@ -31,16 +30,21 @@ import java.io.FileOutputStream;
 
 import cu.lenier.nextchat.R;
 import cu.lenier.nextchat.model.Message;
+import cu.lenier.nextchat.ui.ChatActivity;
 import cu.lenier.nextchat.util.MailHelper;
 
 public class CameraBottomSheet extends BottomSheetDialogFragment {
-    private static final String ARG_CONTACT = "contact";
-    private static final String IMG_SUBJ    = "NextChat Image";
+    private static final String ARG_CONTACT    = "contact";
+    private static final String IMG_SUBJ       = "NextChat Image";
 
     private PreviewView previewView;
     private ImageView ivPhotoPreview;
     private View cameraControls, previewControls;
     private ImageButton btnShutter, btnSwitch, btnFlash, btnDiscard, btnAccept;
+
+    private static final String ARG_REPLY_ID   = "reply_id";
+    private static final String ARG_REPLY_BODY = "reply_body";
+    private static final String ARG_REPLY_TYPE = "reply_type";
 
     private ProcessCameraProvider cameraProvider;
     private Preview previewUseCase;
@@ -51,11 +55,23 @@ public class CameraBottomSheet extends BottomSheetDialogFragment {
 
     private File lastPhotoFile;
     private String contact;
+    private Long replyId;
+    private String replyBody, replyType;
 
-    public static CameraBottomSheet newInstance(String contact) {
+    public static CameraBottomSheet newInstance(
+            String contact,
+            Long   replyId,
+            String replyBody,
+            String replyType
+    ) {
         CameraBottomSheet sheet = new CameraBottomSheet();
         Bundle args = new Bundle();
         args.putString(ARG_CONTACT, contact);
+        if (replyId != null) {
+            args.putLong(ARG_REPLY_ID, replyId);
+            args.putString(ARG_REPLY_BODY, replyBody);
+            args.putString(ARG_REPLY_TYPE, replyType);
+        }
         sheet.setArguments(args);
         return sheet;
     }
@@ -63,9 +79,13 @@ public class CameraBottomSheet extends BottomSheetDialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        contact = getArguments() != null
-                ? getArguments().getString(ARG_CONTACT)
-                : null;
+        Bundle a = getArguments();
+        contact = (a != null) ? a.getString(ARG_CONTACT) : null;
+        if (a != null && a.containsKey(ARG_REPLY_ID)) {
+            replyId   = a.getLong(ARG_REPLY_ID);
+            replyBody = a.getString(ARG_REPLY_BODY);
+            replyType = a.getString(ARG_REPLY_TYPE);
+        }
     }
 
     @Nullable
@@ -145,12 +165,10 @@ public class CameraBottomSheet extends BottomSheetDialogFragment {
     private void takePhoto() {
         if (imageCapture == null) return;
 
-        File dir = new File(requireContext()
-                .getExternalFilesDir(null), "images_enviadas");
+        File dir = new File(requireContext().getExternalFilesDir(null), "images_enviadas");
         if (!dir.exists()) dir.mkdirs();
 
-        lastPhotoFile = new File(dir,
-                "photo_" + System.currentTimeMillis() + ".jpg");
+        lastPhotoFile = new File(dir, "photo_" + System.currentTimeMillis() + ".jpg");
 
         ImageCapture.OutputFileOptions opts =
                 new ImageCapture.OutputFileOptions.Builder(lastPhotoFile).build();
@@ -188,42 +206,16 @@ public class CameraBottomSheet extends BottomSheetDialogFragment {
     private void sendImageMessage() {
         if (lastPhotoFile == null) return;
 
-        // ---- Comprimir la imagen antes de enviarla ----
-        // Cargamos el bitmap original
+        // Comprimir imagen (mediano 600x600)
         Bitmap original = BitmapFactory.decodeFile(lastPhotoFile.getAbsolutePath());
+        File compressed = new File(lastPhotoFile.getParent(), "photo_med_" + lastPhotoFile.getName());
+        Bitmap medBmp = Bitmap.createScaledBitmap(original, 600, 600, true);
+        try (FileOutputStream fos = new FileOutputStream(compressed)) {
+            medBmp.compress(Bitmap.CompressFormat.JPEG, 80, fos);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-//        // OPCIÓN 1: pequeño (200x200)
-//        File compressed = new File(lastPhotoFile.getParent(),
-//                "photo_small_" + lastPhotoFile.getName());
-//        Bitmap smallBmp = Bitmap.createScaledBitmap(original, 200, 200, true);
-//        try (FileOutputStream fos = new FileOutputStream(compressed)) {
-//            smallBmp.compress(Bitmap.CompressFormat.JPEG, 80, fos);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-        // ************************************************************************
-//         OPCIÓN 2: mediano (600x600)
-         File compressed = new File(lastPhotoFile.getParent(),
-                 "photo_med_" + lastPhotoFile.getName());
-         Bitmap medBmp = Bitmap.createScaledBitmap(original, 600, 600, true);
-         try (FileOutputStream fos = new FileOutputStream(compressed)) {
-             medBmp.compress(Bitmap.CompressFormat.JPEG, 80, fos);
-         } catch (Exception e) {
-             e.printStackTrace();
-         }
-        // ************************************************************************
-        // OPCIÓN 3: grande (1200x1200)
-        // File compressed = new File(lastPhotoFile.getParent(),
-        //         "photo_large_" + lastPhotoFile.getName());
-        // Bitmap largeBmp = Bitmap.createScaledBitmap(original, 1200, 1200, true);
-        // try (FileOutputStream fos = new FileOutputStream(compressed)) {
-        //     largeBmp.compress(Bitmap.CompressFormat.JPEG, 80, fos);
-        // } catch (Exception e) {
-        //     e.printStackTrace();
-        // }
-        // ************************************************************************
-
-        // Ahora 'compressed' apunta al JPEG reducido que enviaremos
         String me = requireContext()
                 .getSharedPreferences("prefs", Context.MODE_PRIVATE)
                 .getString("email", "");
@@ -238,6 +230,15 @@ public class CameraBottomSheet extends BottomSheetDialogFragment {
         msg.type           = "image";
         msg.attachmentPath = compressed.getAbsolutePath();
         msg.sendState      = Message.STATE_PENDING;
+
+        if (replyId != null) {
+            msg.inReplyToId   = replyId;
+            msg.inReplyToBody = replyBody;
+            msg.inReplyToType = replyType;
+            if (getActivity() instanceof ChatActivity) {
+                ((ChatActivity) getActivity()).exitReplyMode();
+            }
+        }
 
         MailHelper.sendImageEmail(requireContext(), msg);
     }

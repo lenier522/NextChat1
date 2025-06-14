@@ -15,6 +15,8 @@ import androidx.core.app.NotificationManagerCompat;
 import com.sun.mail.imap.IMAPFolder;
 import com.sun.mail.imap.IMAPStore;
 
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -22,12 +24,12 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 
 import javax.mail.Address;
+import javax.mail.BodyPart;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Multipart;
-import javax.mail.Part;
 import javax.mail.Session;
-import javax.mail.Store;
+import javax.mail.Transport;
 import javax.mail.event.MessageCountAdapter;
 import javax.mail.event.MessageCountEvent;
 import javax.mail.search.FlagTerm;
@@ -84,12 +86,12 @@ public class MailService extends Service {
 
         if (!running) {
             running = true;
-            Executors.newSingleThreadExecutor().execute(this::imapIdleLoop);
+            Executors.newSingleThreadExecutor().execute(this::listenPersonalIMAP);
         }
         return START_STICKY;
     }
 
-    private void imapIdleLoop() {
+    private void listenPersonalIMAP() {
         while (running) {
             IMAPStore store = null;
             IMAPFolder inbox = null;
@@ -101,46 +103,40 @@ public class MailService extends Service {
                 store = (IMAPStore) session.getStore("imap");
                 store.connect("imap.nauta.cu", 143, email, pass);
 
-                // 1) INBOX
                 inbox = (IMAPFolder) store.getFolder("INBOX");
                 inbox.open(Folder.READ_WRITE);
 
-                // 2) Carpeta NextChat
                 chatFolder = (IMAPFolder) store.getFolder(FOLDER_NAME);
                 if (!chatFolder.exists()) chatFolder.create(Folder.HOLDS_MESSAGES);
                 chatFolder.open(Folder.READ_WRITE);
 
-                // 3) Procesar inicialmente no vistos y moverlos
+                // Procesar mensajes no vistos
                 FlagTerm ft = new FlagTerm(new Flags(Flags.Flag.SEEN), false);
-                for (javax.mail.Message m : inbox.search(ft)) {
-                    handleIncoming(m, email);
-                    chatFolder.appendMessages(new javax.mail.Message[]{(MimeMessage) m});
-                    m.setFlag(Flags.Flag.DELETED, true);
+                for (javax.mail.Message mm : inbox.search(ft)) {
+                    handleIncoming(mm, email);
+                    chatFolder.appendMessages(new javax.mail.Message[]{(MimeMessage) mm});
+                    mm.setFlag(Flags.Flag.DELETED, true);
                 }
                 inbox.expunge();
 
-                // 4) Listener IDLE en INBOX
+                // Listener IDLE
                 IMAPFolder finalChatFolder = chatFolder;
                 IMAPFolder finalInbox = inbox;
                 inbox.addMessageCountListener(new MessageCountAdapter() {
                     @Override
                     public void messagesAdded(MessageCountEvent ev) {
-                        for (javax.mail.Message m : ev.getMessages()) {
+                        for (javax.mail.Message mm : ev.getMessages()) {
                             try {
-                                handleIncoming(m, email);
-                                finalChatFolder.appendMessages(new javax.mail.Message[]{(MimeMessage) m});
-                                m.setFlag(Flags.Flag.DELETED, true);
-                            } catch (Exception ignored) {
-                            }
+                                handleIncoming(mm, email);
+                                finalChatFolder.appendMessages(new javax.mail.Message[]{(MimeMessage) mm});
+                                mm.setFlag(Flags.Flag.DELETED, true);
+                            } catch (Exception ignored) {}
                         }
-                        try {
-                            finalInbox.expunge();
-                        } catch (Exception ignored) {
-                        }
+                        try { finalInbox.expunge(); } catch (Exception ignored) {}
                     }
                 });
 
-                // 5) Esperar IDLE
+                // Loop IDLE
                 while (running && inbox.isOpen()) {
                     try {
                         inbox.idle();
@@ -148,26 +144,13 @@ public class MailService extends Service {
                         break;
                     }
                 }
-
             } catch (Exception e) {
-                Log.e(TAG, "imapIdleLoop fallo", e);
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException ignored) {
-                }
+                Log.e(TAG, "imapIdleLoop fallo, durmiendo 5s y reintentando", e);
+                try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
             } finally {
-                try {
-                    if (inbox != null && inbox.isOpen()) inbox.close(false);
-                } catch (Exception ignored) {
-                }
-                try {
-                    if (chatFolder != null && chatFolder.isOpen()) chatFolder.close(false);
-                } catch (Exception ignored) {
-                }
-                try {
-                    if (store != null && store.isConnected()) store.close();
-                } catch (Exception ignored) {
-                }
+                try { if (inbox != null && inbox.isOpen()) inbox.close(false); } catch (Exception ignored) {}
+                try { if (chatFolder != null && chatFolder.isOpen()) chatFolder.close(false); } catch (Exception ignored) {}
+                try { if (store != null && store.isConnected()) store.close(); } catch (Exception ignored) {}
             }
         }
     }
@@ -193,58 +176,91 @@ public class MailService extends Service {
             msg.read = false;
 
             Object content = m.getContent();
-            if (TXT_SUBJ.equals(subj) && !(content instanceof Multipart)) {
-                msg.type = "text";
-                msg.body = CryptoHelper.decrypt(content.toString());
-            } else {
+            String jsonCipher = null;
+            File encFile = null;
+            if (content instanceof String) {
+                jsonCipher = (String) content;
+            } else if (content instanceof Multipart) {
                 Multipart mp = (Multipart) content;
-                msg.body = "";
-                for (int i = 0; i < mp.getCount(); i++) {
-                    Part part = mp.getBodyPart(i);
-                    if (Part.ATTACHMENT.equalsIgnoreCase(part.getDisposition())) {
-                        File dir = new File(getExternalFilesDir(null),
-                                AUD_SUBJ.equals(subj) ? "audios_recibidos" : "images_recibidas");
-                        if (!dir.exists()) dir.mkdirs();
-                        File enc = new File(dir, System.currentTimeMillis() + "_" + part.getFileName());
-                        try (InputStream is = part.getInputStream();
-                             FileOutputStream fos = new FileOutputStream(enc)) {
-                            byte[] buf = new byte[4096];
-                            int r;
-                            while ((r = is.read(buf)) > 0) fos.write(buf, 0, r);
-                        }
-                        File dec = new File(dir,
-                                enc.getName().replace(".enc",
-                                        AUD_SUBJ.equals(subj) ? ".3gp" : ".jpg"));
-                        if (AUD_SUBJ.equals(subj)) {
-                            CryptoHelper.decryptAudio(enc, dec);
-                        } else {
-                            CryptoHelper.decryptFile(enc, dec);
-                        }
-                        enc.delete();
-                        msg.attachmentPath = dec.getAbsolutePath();
-                        msg.type = AUD_SUBJ.equals(subj) ? "audio" : "image";
-                        break;
-                    }
+                BodyPart part0 = mp.getBodyPart(0);
+                if (part0.getContentType().toLowerCase().startsWith("text/plain")) {
+                    jsonCipher = part0.getContent().toString();
                 }
+                if (mp.getCount() > 1) {
+                    BodyPart part1 = mp.getBodyPart(1);
+                    File baseDir = new File(getExternalFilesDir(null),
+                            subj.equals(AUD_SUBJ) ? "audios_recibidos" : "images_recibidas");
+                    if (!baseDir.exists()) baseDir.mkdirs();
+                    File tmpEnc = new File(baseDir, System.currentTimeMillis() + "_" + part1.getFileName());
+                    try (InputStream is = part1.getInputStream();
+                         FileOutputStream fos = new FileOutputStream(tmpEnc)) {
+                        byte[] buf = new byte[4096]; int r;
+                        while ((r = is.read(buf)) > 0) fos.write(buf, 0, r);
+                    }
+                    encFile = tmpEnc;
+                }
+            } else {
+                return;
+            }
+            if (jsonCipher == null) return;
+
+            String jsonPlain;
+            try { jsonPlain = CryptoHelper.decrypt(jsonCipher); }
+            catch (Exception ex) { Log.e(TAG, "No se pudo descifrar JSON entrante", ex); return; }
+
+            JSONObject jsonMsg = new JSONObject(jsonPlain);
+            String type = jsonMsg.getString("type");
+            msg.type = type;
+            if ("text".equals(type)) {
+                msg.body = CryptoHelper.decrypt(jsonMsg.getString("body"));
+            } else {
+                msg.body = "";
             }
 
-            Executors.newSingleThreadExecutor().execute(() -> dao.insert(msg));
+            if ("audio".equals(type) && encFile != null) {
+                File decFile = new File(encFile.getParentFile(),
+                        encFile.getName().replace(".tmp", ".3gp"));
+                CryptoHelper.decryptAudio(encFile, decFile);
+                encFile.delete();
+                msg.attachmentPath = decFile.exists() ? decFile.getAbsolutePath() : null;
+            } else if ("image".equals(type) && encFile != null) {
+                File decFile = new File(encFile.getParentFile(),
+                        encFile.getName().replace(".tmp", ".jpg"));
+                CryptoHelper.decryptFile(encFile, decFile);
+                encFile.delete();
+                msg.attachmentPath = decFile.exists() ? decFile.getAbsolutePath() : null;
+            } else {
+                msg.attachmentPath = null;
+            }
+
+            JSONObject inRep = jsonMsg.getJSONObject("inReplyTo");
+            int parentId = inRep.getInt("parentId");
+            if (parentId > 0) {
+                msg.inReplyToId = parentId;
+                msg.inReplyToType = inRep.optString("parentType", null);
+                msg.inReplyToBody = inRep.optString("parentBody", null);
+            }
+            if (!jsonMsg.isNull("messageId")) {
+                msg.messageId = jsonMsg.getString("messageId");
+            }
+
+            dao.insert(msg);
 
             String curr = AppConfig.getCurrentChat();
             if (curr == null || !curr.equalsIgnoreCase(from.trim())) {
+                String textoNotif = "text".equals(type) ? msg.body : type + " recibido";
                 NotificationCompat.Builder nb = new NotificationCompat.Builder(this, CH_NEWMSG)
                         .setContentTitle("Mensaje de " + from)
-                        .setContentText(msg.type.equals("text") ? msg.body : msg.type + " recibido")
+                        .setContentText(textoNotif)
                         .setSmallIcon(R.drawable.ic_notification)
                         .setAutoCancel(true)
                         .setPriority(NotificationCompat.PRIORITY_DEFAULT);
                 if (Build.VERSION.SDK_INT < 33 ||
                         checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
                                 == PackageManager.PERMISSION_GRANTED) {
-                    NotificationManagerCompat.from(this).notify((int) ts, nb.build());
+                    NotificationManagerCompat.from(this).notify((int) msg.timestamp, nb.build());
                 }
             }
-
         } catch (Exception e) {
             Log.e(TAG, "handleIncoming error", e);
         }

@@ -13,6 +13,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -29,6 +30,8 @@ import cu.lenier.nextchat.util.PermissionHelper;
 import cu.lenier.nextchat.work.MailSyncWorker;
 
 public class LoginActivity extends AppCompatActivity {
+
+    private static final String TAG = "Login";
     private EditText     etEmail, etPass;
     private Button       btnLogin;
     private ProgressDialog pd;
@@ -130,6 +133,7 @@ public class LoginActivity extends AppCompatActivity {
                     startMailService();
                     MailSyncWorker.schedulePeriodicSync(this);
                     startActivity(new Intent(this, ProfileActivity.class));
+                    Log.e(TAG, "Error Al Loguearce");
                     finish();
                 });
             } catch (Exception e) {

@@ -7,11 +7,12 @@ android {
     compileSdk = 36
 
     defaultConfig {
+
         applicationId = "com.lenier.amarefree"
         minSdk = 24
         targetSdk = 36
-        versionCode = 60
-        versionName = "1.3.7"
+        versionCode = 75
+        versionName = "1.4.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -4,38 +4,70 @@
     android:layout_height="wrap_content"
     android:padding="4dp">
 
-    <!-- NUEVO: TextView para la cita de reply -->
-    <TextView
-        android:id="@+id/tvReplyPreview"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp"
-        android:visibility="gone"
-        android:textColor="#666"
-        android:maxLines="1"
-        android:ellipsize="end"/>
-
     <LinearLayout
+        android:id="@+id/container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
-        android:orientation="vertical"
+        android:layout_marginTop="24dp"
         android:background="@drawable/bg_bubble_received"
-        android:padding="8dp"
-        android:layout_marginTop="24dp">
+        android:orientation="vertical"
+        android:padding="8dp">
 
-    <ImageView
+        <!-- Reply preview -->
+        <LinearLayout
+            android:id="@+id/replyContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:background="@drawable/bg_reply_preview"
+            android:orientation="horizontal"
+            android:padding="6dp"
+            android:visibility="gone">
+
+            <View
+                android:layout_width="3dp"
+                android:layout_height="match_parent"
+                android:background="@color/colorAccent" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvReplyType"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#555555"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvReplyContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#444444"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Imagen recibida -->
+        <ImageView
             android:id="@+id/ivImage"
             android:layout_width="200dp"
             android:layout_height="200dp"
-            android:scaleType="centerCrop"/>
+            android:scaleType="centerCrop" />
 
+        <!-- Hora -->
         <TextView
             android:id="@+id/tvTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textSize="12sp"
-            android:textColor="#666"/>
+            android:textColor="#666"
+            android:textSize="12sp" />
     </LinearLayout>
 </FrameLayout>

@@ -1,4 +1,3 @@
-// ChatListActivity.java
 package cu.lenier.nextchat.ui;
 
 import android.content.BroadcastReceiver;
@@ -7,17 +6,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.Network;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Patterns;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,19 +21,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.textfield.TextInputEditText;
 import com.lenier.update_chaker.UpdateChecker;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,6 +39,7 @@ import java.util.concurrent.Executors;
 
 import cu.lenier.nextchat.R;
 import cu.lenier.nextchat.adapter.ChatListAdapter;
+import cu.lenier.nextchat.config.AppConfig;
 import cu.lenier.nextchat.data.AppDatabase;
 import cu.lenier.nextchat.model.Message;
 import cu.lenier.nextchat.model.Profile;
@@ -83,6 +76,7 @@ public class ChatListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_list);
 
+        // Start mail sync service
         Intent mailSvc = new Intent(this, MailService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(mailSvc);
@@ -140,7 +134,8 @@ public class ChatListActivity extends AppCompatActivity {
         cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         try {
             cm.registerDefaultNetworkCallback(netCallback);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         syncHandler.post(syncRunnable);
     }
 
@@ -151,7 +146,8 @@ public class ChatListActivity extends AppCompatActivity {
             if (cm != null && netCallback != null) {
                 cm.unregisterNetworkCallback(netCallback);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         syncHandler.removeCallbacks(syncRunnable);
     }
 
@@ -182,7 +178,8 @@ public class ChatListActivity extends AppCompatActivity {
                 });
                 dlg.show();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void setupRecyclerView() {
@@ -205,23 +202,49 @@ public class ChatListActivity extends AppCompatActivity {
         AppDatabase db = AppDatabase.getInstance(this);
         db.messageDao().getContacts().observe(this, contacts -> {
             Executors.newSingleThreadExecutor().execute(() -> {
+                // 1) Copia mutable e incluye el canal al inicio
+                List<String> modList = new ArrayList<>(contacts);
+                if (!modList.contains(AppConfig.OFFICIAL_CHANNEL_ID)) {
+                    modList.add(0, AppConfig.OFFICIAL_CHANNEL_ID);
+                }
+
+                // 2) Construir mapas de preview y timestamp
                 Map<String, String> previews = new HashMap<>();
                 Map<String, Long> times = new HashMap<>();
-                for (String c : contacts) {
-                    Message last = db.messageDao().getLastMessageSync(c);
-                    if (last != null) {
-                        previews.put(c, android.text.TextUtils.equals(last.type, "text") ? last.body : last.type);
-                        times.put(c, last.timestamp);
+                for (String c : modList) {
+                    if (AppConfig.OFFICIAL_CHANNEL_ID.equals(c)) {
+                        // Canal: último mensaje estático
+                        List<Message> chMsgs = AppConfig.getChannelMessages();
+                        if (!chMsgs.isEmpty()) {
+                            Message last = chMsgs.get(chMsgs.size() - 1);
+                            previews.put(c, last.type.equals("text") ? last.body : last.type);
+                            times.put(c, last.timestamp);
+                        } else {
+                            previews.put(c, "");
+                            times.put(c, 0L);
+                        }
                     } else {
-                        previews.put(c, "");
-                        times.put(c, 0L);
+                        // Chat normal
+                        Message last = db.messageDao().getLastMessageSync(c);
+                        if (last != null) {
+                            previews.put(c, last.type.equals("text") ? last.body : last.type);
+                            times.put(c, last.timestamp);
+                        } else {
+                            previews.put(c, "");
+                            times.put(c, 0L);
+                        }
                     }
                 }
-                List<String> sorted = new ArrayList<>(contacts);
-                Collections.sort(sorted, (a, b) ->
-                        Long.compare(times.getOrDefault(b, 0L),
-                                times.getOrDefault(a, 0L))
-                );
+
+                // 3) Ordenar por timestamp desc, canal siempre primero
+                List<String> sorted = new ArrayList<>(modList);
+                Collections.sort(sorted, (a, b) -> {
+                    if (AppConfig.OFFICIAL_CHANNEL_ID.equals(a)) return -1;
+                    if (AppConfig.OFFICIAL_CHANNEL_ID.equals(b)) return 1;
+                    return Long.compare(times.getOrDefault(b, 0L),
+                            times.getOrDefault(a, 0L));
+                });
+
                 runOnUiThread(() -> {
                     adapter.setContacts(sorted);
                     adapter.setPreviewMap(previews);
@@ -231,11 +254,14 @@ public class ChatListActivity extends AppCompatActivity {
         });
     }
 
+
     private void observeUnreadCounts() {
         AppDatabase db = AppDatabase.getInstance(this);
         db.messageDao().getUnreadCounts().observe(this, list -> {
             unreadMap.clear();
-            for (UnreadCount uc : list) unreadMap.put(uc.contact, uc.unread);
+            for (UnreadCount uc : list) {
+                unreadMap.put(uc.contact, uc.unread);
+            }
             adapter.setUnreadMap(unreadMap);
         });
     }
@@ -266,6 +292,13 @@ public class ChatListActivity extends AppCompatActivity {
                 nameMap.put(key, p.name);
                 avatarMap.put(key, p.photoUri);
             }
+
+            // ---- Inyectar canal oficial ----
+            String chan = AppConfig.OFFICIAL_CHANNEL_ID;
+            nameMap.put(chan, AppConfig.OFFICIAL_CHANNEL_NAME);
+            // Usa drawable://ic_channel_avatar
+            avatarMap.put(chan, "drawable://ic_verifed");
+
             runOnUiThread(() -> {
                 adapter.setNameMap(nameMap);
                 adapter.setAvatarMap(avatarMap);
@@ -273,25 +306,25 @@ public class ChatListActivity extends AppCompatActivity {
         });
     }
 
+
     private void openChat(String contact) {
-        Executors.newSingleThreadExecutor().execute(() ->
-                AppDatabase.getInstance(this)
-                        .messageDao()
-                        .markAsRead(contact,
-                                getSharedPreferences("prefs", MODE_PRIVATE)
-                                        .getString("email", "")
-                        )
-        );
-        startActivity(new Intent(this, ChatActivity.class)
-                .putExtra("contact", contact));
+        Executors.newSingleThreadExecutor().execute(() -> {
+            String me = getSharedPreferences("prefs", MODE_PRIVATE).getString("email", "");
+            AppDatabase.getInstance(this)
+                    .messageDao()
+                    .markAsRead(contact, me);
+        });
+        Intent i = new Intent(this, ChatActivity.class)
+                .putExtra("contact", contact);
+        startActivity(i);
     }
 
     private void confirmDelete(String contact) {
         new AlertDialog.Builder(this)
                 .setTitle("Eliminar chat")
                 .setMessage("¿Eliminar toda la conversación con " + contact + "?")
-                .setPositiveButton("Eliminar", (d, w) -> Executors
-                        .newSingleThreadExecutor().execute(() ->
+                .setPositiveButton("Eliminar", (d, w) ->
+                        Executors.newSingleThreadExecutor().execute(() ->
                                 AppDatabase.getInstance(this)
                                         .messageDao()
                                         .deleteByContact(contact)

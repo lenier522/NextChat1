@@ -25,7 +25,25 @@
     1-Se agregó un Onboarding al Inicio.\n
     2-Se cambió el apartado de crar un Perfil para Inicio despúes del Login.\n
     3-Se agregó la opcion de seleccionar emojis.\n
-    4-Se corrigieron errores.\n
+    4-Se corrigieron errores.\n\n
+    v 1.4.3 \n\n
+    Cambios \n\n
+    1-Se agregó fecha de los mensajes en los Chat.\n
+    2-Se agregó botón para bajar a lo último del chat.\n
+    3-Se agregó la opción de responder los mensajes.\n
+    4-Se agregó el Canal de la App.\n
+    5-Se corrigieron errores.
+
+    </string>
+
+    <string name="channel_version">
+    v 1.4.3 \n
+    Cambios \n
+    1-Se agregó fecha de los mensajes en los Chat.\n
+    2-Se agregó botón para bajar a lo último del chat.\n
+    3-Se agregó la opción de responder los mensajes.\n
+    4-Se agregó el Canal de la App.\n
+    5-Se corrigieron errores.
     </string>
 
 

@@ -18,6 +18,9 @@ public class Message {
 
     @PrimaryKey(autoGenerate = true) public int id;
 
+
+    public String messageId;
+
     public String fromAddress;
     public String toAddress;
     public String subject;
@@ -30,4 +33,5 @@ public class Message {
     public int     sendState; // 0=failed,1=pending,2=sent
     public long   inReplyToId;      // ID del mensaje original
     public String inReplyToBody;    // Texto del mensaje original
+    public String inReplyToType; // "text", "audio", "image"
 }
