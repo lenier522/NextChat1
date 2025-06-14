@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Colores DayNight -->
+    <!--Login-->
+    <color name="login_background">#1D1C1C</color>
+    <color name="btn_login">#FF6200EE</color>
+    <color name="txt_login">#FFFFFF</color>
+    <color name="txt_hint_login">#FFFFFFFF</color>
+
+    <!--Perfil-->
+    <color name="txt_hint_perfil">#FFFFFFFF</color>
+    <color name="perfil_background">#1D1C1C</color>
+    <color name="btn_perfil">#FF6200EE</color>
+
+    <!--Chat-->
+    <color name="txt_hint_chat">#242424</color>
+    <!--Toolbar-->
+    <color name="title_toolbar">#FFEEEEEE</color>
+    <color name="subt_toolbar">#FFEEEEEE</color>
+
+</resources>

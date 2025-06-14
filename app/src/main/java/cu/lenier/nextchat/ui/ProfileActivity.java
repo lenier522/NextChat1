@@ -115,7 +115,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         ArrayAdapter<String> provinceAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_dropdown_item,
-                new String[]{"Elija una provincia", "La Habana", "Santiago", "Holguin", "Otra provincia"});
+                new String[]{"Elija una provincia", "La Habana", "Santiago", "Holguin","Pinar Del Rio", "Otra provincia"});
         spProvince.setAdapter(provinceAdapter);
 
         // Birth date picker

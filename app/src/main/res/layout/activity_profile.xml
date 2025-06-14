@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA"
+    android:background="?attr/perfilBackground"
     android:padding="16dp">
 
     <FrameLayout
@@ -46,6 +46,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Nombre"
+                    android:textColor="?attr/textHintPerfil"
                     android:textSize="16sp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -60,6 +61,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Correo"
+                    android:textColor="?attr/textHintPerfil"
                     android:inputType="textEmailAddress"
                     android:textSize="16sp"/>
             </com.google.android.material.textfield.TextInputLayout>
@@ -75,6 +77,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Teléfono"
+                    android:textColor="?attr/textHintPerfil"
                     android:inputType="phone"
                     android:textSize="16sp"/>
             </com.google.android.material.textfield.TextInputLayout>
@@ -90,6 +93,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Info del perfil"
+                    android:textColor="?attr/textHintPerfil"
                     android:textSize="16sp"/>
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -98,6 +102,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
+                android:textColor="?attr/textHintPerfil"
                 android:background="@drawable/bg_spinner"
                 android:spinnerMode="dropdown"/>
 
@@ -112,6 +117,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Fecha de nacimiento"
+                    android:textColor="?attr/textHintPerfil"
                     android:focusable="false"
                     android:textSize="16sp"/>
             </com.google.android.material.textfield.TextInputLayout>
@@ -121,6 +127,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
+                android:textColor="?attr/textHintPerfil"
                 android:background="@drawable/bg_spinner"
                 android:spinnerMode="dropdown"/>
 
@@ -129,6 +136,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="8dp"
+                android:textColor="?attr/textHintPerfil"
                 android:background="@drawable/bg_spinner"
                 android:spinnerMode="dropdown"/>
 
@@ -138,7 +146,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="24dp"
-                android:backgroundTint="#0D6EFD"
+                android:backgroundTint="?attr/btnPerfil"
                 android:text="Guardar"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"

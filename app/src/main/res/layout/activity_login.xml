@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F6FA"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:background="?attr/loginBackground">
 
     <!-- Encabezado -->
     <ImageView
@@ -24,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Iniciar Sesión"
-        android:textColor="#2C3E50"
+        android:textColor="?attr/textColorLogin"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/ivLogo"
@@ -55,7 +55,7 @@
             android:layout_height="wrap_content"
             android:hint="Correo electrónico"
             android:inputType="textEmailAddress"
-            android:textColor="#2C3E50"
+            android:textColor="?attr/textHintLogin"
             android:textSize="16sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -81,7 +81,7 @@
             android:layout_height="wrap_content"
             android:hint="Contraseña"
             android:inputType="textPassword"
-            android:textColor="#2C3E50"
+            android:textColor="?attr/textHintLogin"
             android:textSize="16sp" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -96,7 +96,7 @@
         android:text="Acceder"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
-        app:backgroundTint="#3498db"
+        app:backgroundTint="?attr/btnLogin"
         app:cornerRadius="12dp"
         app:iconGravity="end"
         app:iconTint="#FFFFFF"

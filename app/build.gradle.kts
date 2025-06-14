@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
 
-        applicationId = "com.lenier.amarefree"
+        applicationId = "cu.lenier.nextchat"
         minSdk = 24
         targetSdk = 36
         versionCode = 75

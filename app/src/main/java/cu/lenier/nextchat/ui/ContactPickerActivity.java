@@ -4,11 +4,13 @@ import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Patterns;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -51,10 +53,22 @@ public class ContactPickerActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.toolbar_picker);
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
-        toolbar.setTitleTextColor(Color.BLACK);
-        toolbar.setSubtitleTextColor(Color.DKGRAY);
+        // Resuelvo el colorOnSurface dinámicamente
+        TypedValue tv = new TypedValue();
+        Resources.Theme theme = toolbar.getContext().getTheme();
+// Para el título
+        theme.resolveAttribute(R.attr.colorToolbarTitle, tv, true);
+        int colorTitle = tv.data;
+        toolbar.setTitleTextColor(colorTitle);
+
+// Para el subtítulo (ej.: colorOnSurfaceVariant)
+        theme.resolveAttribute(R.attr.colorToolbarSubt, tv, true);
+        int colorSubtitle = tv.data;
+        toolbar.setSubtitleTextColor(colorSubtitle);
+
+// Para el icono de navegación
         if (toolbar.getNavigationIcon() != null) {
-            toolbar.getNavigationIcon().setTint(Color.BLACK);
+            toolbar.getNavigationIcon().setTint(colorTitle);
         }
 
         // RecyclerView

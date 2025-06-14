@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--Login-->
+    <attr name="textColorLogin" format="color"/>
+    <attr name="loginBackground" format="color"/>
+    <attr name="textHintLogin" format="color"/>
+    <attr name="btnLogin" format="color"/>
+
+    <!--Perfil-->
+    <attr name="textHintPerfil" format="color"/>
+    <attr name="btnPerfil" format="color"/>
+    <attr name="perfilBackground" format="color"/>
+
+    <!--Chat-->
+    <attr name="textHintChat" format="color"/>
+
+    <!--Toolbar-->
+    <attr name="colorToolbarTitle" format="color"/>
+    <attr name="colorToolbarSubt" format="color"/>
+
+</resources>

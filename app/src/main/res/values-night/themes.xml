@@ -3,5 +3,25 @@
     <style name="Base.Theme.NextChat" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+
+        <!--Login-->
+        <item name="textColorLogin">@color/txt_login</item>
+        <item name="loginBackground">@color/login_background</item>
+        <item name="textHintLogin">@color/txt_hint_login</item>
+        <item name="btnLogin">@color/btn_login</item>
+
+
+        <!--Perfil-->
+        <item name="textHintPerfil">@color/txt_hint_login</item>
+        <item name="perfilBackground">@color/login_background</item>
+        <item name="btnPerfil">@color/btn_login</item>
+
+        <!--Chat-->
+        <item name="textHintChat">@color/txt_hint_chat</item>
+
+        <!--Toolbar-->
+        <item name="colorToolbarTitle">@color/title_toolbar</item>
+        <item name="colorToolbarSubt">@color/subt_toolbar</item>
+
     </style>
 </resources>

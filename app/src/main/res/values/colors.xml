@@ -15,4 +15,26 @@
     <color name="outline_variant">#C4C7C6</color>
 
 
+    <!--Colores DayNight -->
+    <!--Login-->
+    <color name="login_background">#FFEEEEEE</color>
+    <color name="btn_login">#FF6200EE</color>
+    <color name="txt_login">#FF000000</color>
+    <color name="txt_hint_login">#FF000000</color>
+
+    <!--Perfil-->
+    <color name="perfil_background">#FFEEEEEE</color>
+    <color name="btn_perfil">#FF6200EE</color>
+    <color name="txt_hint_perfil">#FF000000</color>
+
+    <!--Chat-->
+    <color name="txt_hint_chat">#2A2929</color>
+
+    <!--Toolbar-->
+    <color name="title_toolbar">#FF000000</color>
+    <color name="subt_toolbar">#FF000000</color>
+
+
+
+
 </resources>
