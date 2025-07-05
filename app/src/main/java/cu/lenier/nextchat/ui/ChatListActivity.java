@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
@@ -21,6 +22,11 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.graphics.Insets;
+import androidx.core.view.OnApplyWindowInsetsListener;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.Observer;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -74,8 +80,11 @@ public class ChatListActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         setContentView(R.layout.activity_chat_list);
 
+        setupEdgeToEdgeInsets();
+        
         // Start mail sync service
         Intent mailSvc = new Intent(this, MailService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -97,6 +106,50 @@ public class ChatListActivity extends AppCompatActivity {
         observeUnreadCounts();
         loadAndApplyProfiles();
     }
+
+    private void setupEdgeToEdgeInsets() {
+        // 1) Referencias al root, toolbar y FAB
+        final View root       = findViewById(R.id.rootLayout);
+        final Toolbar toolbar = findViewById(R.id.toolbar);
+        final FloatingActionButton fab = findViewById(R.id.fabNewChat);
+
+        // 2) Guardar márgenes/paddings base
+        //    – Toolbar: paddingTop original
+        final int baseToolbarPaddingTop = toolbar.getPaddingTop();
+        //    – FAB: marginBottom original
+        ViewGroup.MarginLayoutParams fabLp =
+                (ViewGroup.MarginLayoutParams) fab.getLayoutParams();
+        final int baseFabMarginBottom = fabLp.bottomMargin;
+
+        // 3) Listener único para insets superior e inferior
+        ViewCompat.setOnApplyWindowInsetsListener(root, new OnApplyWindowInsetsListener() {
+            @Override
+            public WindowInsetsCompat onApplyWindowInsets(View v, WindowInsetsCompat insets) {
+                Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+                // 3a) Ajustar Toolbar para que quede debajo de la status bar
+                toolbar.setPadding(
+                        toolbar.getPaddingLeft(),
+                        sysBars.top + baseToolbarPaddingTop,
+                        toolbar.getPaddingRight(),
+                        toolbar.getPaddingBottom()
+                );
+
+                // 3b) Ajustar FAB para que quede encima de la navigation bar
+                ViewGroup.MarginLayoutParams params =
+                        (ViewGroup.MarginLayoutParams) fab.getLayoutParams();
+                params.bottomMargin = sysBars.bottom + baseFabMarginBottom;
+                fab.setLayoutParams(params);
+
+                // 4) Devolver insets para que sigan propagándose
+                return insets;
+            }
+        });
+
+        // 5) Forzar la primera aplicación
+        root.requestApplyInsets();
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -192,10 +245,41 @@ public class ChatListActivity extends AppCompatActivity {
     }
 
     private void setupFab() {
-        FloatingActionButton fab = findViewById(R.id.fabNewChat);
-        fab.setOnClickListener(v ->
+        final View root = findViewById(R.id.rootLayout);
+        final FloatingActionButton fab = findViewById(R.id.fabNewChat);
+
+        // 2) Margin base (16dp) que pusiste en XML
+        ViewGroup.MarginLayoutParams lpFab =
+                (ViewGroup.MarginLayoutParams) fab.getLayoutParams();
+        final int baseBottomMargin = lpFab.bottomMargin;
+
+        // 3) Listener de insets correctamente tipado
+        ViewCompat.setOnApplyWindowInsetsListener(root, new OnApplyWindowInsetsListener() {
+            @Override
+            public WindowInsetsCompat onApplyWindowInsets(View v, WindowInsetsCompat insets) {
+                // Aquí sysBars es un Insets (de android.graphics)
+                Insets sysBars = insets.getInsets(
+                        WindowInsetsCompat.Type.systemBars());
+
+                // Actualizamos sólo el marginBottom
+                ViewGroup.MarginLayoutParams params =
+                        (ViewGroup.MarginLayoutParams) fab.getLayoutParams();
+                params.bottomMargin = sysBars.bottom + baseBottomMargin;
+                fab.setLayoutParams(params);
+
+                // Devolvemos los insets para que los puedan usar otras vistas hijas
+                return insets;
+            }
+        });
+
+        // 4) Listener normal de clic
+        fab.setOnClickListener(view ->
                 startActivity(new Intent(this, ContactPickerActivity.class))
         );
+
+        // 5) Importante: después de setContentView() llama a requestApplyInsets()
+        //    para que se dispare inmediatamente el listener.
+        root.requestApplyInsets();
     }
 
     private void observeContacts() {
